@@ -13,14 +13,14 @@ use crate::{
     hash::{sha256::HashMatZq, HashInto},
     signature::SignatureScheme,
 };
-use qfall_tools::{
-    primitive::psf::{PSF, PSFGPV},
-    sample::g_trapdoor::gadget_parameters::GadgetParameters,
-};
 use qfall_math::{
     integer::{MatZ, Z},
     integer_mod_q::{MatZq, Modulus},
     rational::{MatQ, Q},
+};
+use qfall_tools::{
+    primitive::psf::{PSF, PSFGPV},
+    sample::g_trapdoor::gadget_parameters::GadgetParameters,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

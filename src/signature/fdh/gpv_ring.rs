@@ -13,14 +13,14 @@ use crate::{
     hash::{sha256::HashMatPolynomialRingZq, HashInto},
     signature::SignatureScheme,
 };
-use qfall_tools::{
-    primitive::psf::{PSFGPVRing, PSF},
-    sample::g_trapdoor::gadget_parameters::GadgetParametersRing,
-};
 use qfall_math::{
     integer::{MatPolyOverZ, Z},
     integer_mod_q::{MatPolynomialRingZq, Modulus},
     rational::Q,
+};
+use qfall_tools::{
+    primitive::psf::{PSFGPVRing, PSF},
+    sample::g_trapdoor::gadget_parameters::GadgetParametersRing,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

@@ -347,8 +347,8 @@ mod tests_sha {
 #[cfg(test)]
 mod hash_into_mat_polynomial_ring_zq {
     use super::{HashInto, HashMatPolynomialRingZq};
-    use qfall_tools::sample::g_trapdoor::gadget_parameters::GadgetParametersRing;
     use qfall_math::{integer::PolyOverZ, traits::*};
+    use qfall_tools::sample::g_trapdoor::gadget_parameters::GadgetParametersRing;
 
     /// Ensure that the hash function maps into the correct dimension and it is also
     /// static, i.e. the same value is returned, when the same value  is hashed.
