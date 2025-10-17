@@ -11,7 +11,7 @@
 //! a corresponding hash function.
 //!
 //! The constructions follow the general definition of a hash-then-sign signature scheme
-//! that uses a hash function as in [\[1\]](<index.html#:~:text=[1]>) and a PSF.
+//! that uses a hash function as in [\[1\]](<../index.html#:~:text=[1]>) and a PSF.
 //! This signature scheme uses a storage, so it is stateful.
 //!
 //! Requirements
