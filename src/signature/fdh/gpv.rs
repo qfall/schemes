@@ -13,7 +13,7 @@ use crate::{
     hash::{sha256::HashMatZq, HashInto},
     signature::SignatureScheme,
 };
-use qfall_crypto::{
+use qfall_tools::{
     primitive::psf::{PSF, PSFGPV},
     sample::g_trapdoor::gadget_parameters::GadgetParameters,
 };

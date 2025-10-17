@@ -207,7 +207,7 @@ impl HashInto<MatZq> for HashMatZq {
 /// # Examples
 /// ```
 /// use qfall_schemes::hash::{HashInto, sha256::HashMatPolynomialRingZq};
-/// use qfall_crypto::sample::g_trapdoor::gadget_parameters::GadgetParametersRing;
+/// use qfall_tools::sample::g_trapdoor::gadget_parameters::GadgetParametersRing;
 ///
 /// let gp = GadgetParametersRing::init_default(10, 99);
 ///
@@ -237,7 +237,7 @@ impl HashInto<MatPolynomialRingZq> for HashMatPolynomialRingZq {
     /// # Examples
     /// ```
     /// use qfall_schemes::hash::{HashInto, sha256::{HashMatPolynomialRingZq}};
-    /// use qfall_crypto::sample::g_trapdoor::gadget_parameters::GadgetParametersRing;
+    /// use qfall_tools::sample::g_trapdoor::gadget_parameters::GadgetParametersRing;
     ///
     /// let gp = GadgetParametersRing::init_default(10, 99);
     ///
@@ -347,7 +347,7 @@ mod tests_sha {
 #[cfg(test)]
 mod hash_into_mat_polynomial_ring_zq {
     use super::{HashInto, HashMatPolynomialRingZq};
-    use qfall_crypto::sample::g_trapdoor::gadget_parameters::GadgetParametersRing;
+    use qfall_tools::sample::g_trapdoor::gadget_parameters::GadgetParametersRing;
     use qfall_math::{integer::PolyOverZ, traits::*};
 
     /// Ensure that the hash function maps into the correct dimension and it is also

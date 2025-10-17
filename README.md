@@ -57,7 +57,7 @@ Please use the following bibtex entry to cite [qFALL-schemes](https://github.com
 ```text
 @misc{qFALL-schemes,
     author = {Porzenheim, Laurens and Beckmann, Marvin and Kramer, Paul and Milewski, Phil and Moog, Sven and Schmidt, Marcel and Siemer, Niklas},
-    title = {qFALL-crypto v0.0},
+    title = {qFALL-schemes v0.0},
     howpublished = {Online: \url{https://github.com/qfall/crypto}},
     month = Mar,
     year = 2023,

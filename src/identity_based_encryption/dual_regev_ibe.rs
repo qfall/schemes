@@ -15,7 +15,7 @@ use crate::{
     hash::sha256::hash_to_mat_zq_sha256,
     pk_encryption::{DualRegev, PKEncryptionScheme},
 };
-use qfall_crypto::{
+use qfall_tools::{
     primitive::psf::{PSF, PSFGPV},
     sample::g_trapdoor::gadget_parameters::GadgetParameters,
 };

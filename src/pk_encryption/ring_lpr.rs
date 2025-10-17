@@ -10,18 +10,18 @@
 //! public key Ring-LPR encryption scheme.
 
 use super::PKEncryptionScheme;
-use qfall_crypto::utils::{
-    common_encodings::{
-        decode_z_bitwise_from_polynomialringzq, encode_z_bitwise_in_polynomialringzq,
-    },
-    common_moduli::new_anticyclic,
-};
 use qfall_math::{
     error::MathError,
     integer::Z,
     integer_mod_q::{Modulus, ModulusPolynomialRingZq, PolynomialRingZq},
     rational::Q,
     traits::Pow,
+};
+use qfall_tools::utils::{
+    common_encodings::{
+        decode_z_bitwise_from_polynomialringzq, encode_z_bitwise_in_polynomialringzq,
+    },
+    common_moduli::new_anticyclic,
 };
 use serde::{Deserialize, Serialize};
 

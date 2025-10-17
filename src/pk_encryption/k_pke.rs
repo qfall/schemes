@@ -13,15 +13,15 @@
 //! ML-KEM and mostly supposed to showcase the prototyping capabilities of the `qfall`-library.
 
 use crate::pk_encryption::PKEncryptionScheme;
-use qfall_crypto::utils::{
+use qfall_math::{
+    integer::Z,
+    integer_mod_q::{MatPolynomialRingZq, ModulusPolynomialRingZq, PolynomialRingZq},
+};
+use qfall_tools::utils::{
     common_encodings::{
         decode_z_bitwise_from_polynomialringzq, encode_z_bitwise_in_polynomialringzq,
     },
     common_moduli::new_anticyclic,
-};
-use qfall_math::{
-    integer::Z,
-    integer_mod_q::{MatPolynomialRingZq, ModulusPolynomialRingZq, PolynomialRingZq},
 };
 use serde::{Deserialize, Serialize};
 

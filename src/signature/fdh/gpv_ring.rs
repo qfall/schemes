@@ -13,7 +13,7 @@ use crate::{
     hash::{sha256::HashMatPolynomialRingZq, HashInto},
     signature::SignatureScheme,
 };
-use qfall_crypto::{
+use qfall_tools::{
     primitive::psf::{PSFGPVRing, PSF},
     sample::g_trapdoor::gadget_parameters::GadgetParametersRing,
 };
@@ -27,8 +27,8 @@ use std::collections::HashMap;
 
 /// Initializes an FDH signature scheme from a [`PSFGPVRing`].
 /// The trapdoor is sampled with a Gaussian parameter of 1.005
-/// as done in [\[3\]](<qfall_crypto::sample::g_trapdoor>) who derived it from
-/// [\[5\]](<qfall_crypto::sample::g_trapdoor>).
+/// as done in [\[3\]](<qfall_tools::sample::g_trapdoor>) who derived it from
+/// [\[5\]](<qfall_tools::sample::g_trapdoor>).
 ///
 /// This function corresponds to an implementation of an FDH-signature
 /// scheme with the explicit PSF [`PSFGPVRing`] which is generated using

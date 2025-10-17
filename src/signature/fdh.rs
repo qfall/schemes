@@ -15,13 +15,13 @@
 //! This signature scheme uses a storage, so it is stateful.
 //!
 //! Requirements
-//! - `psf`: The PSF which has to implement the [`PSF`](qfall_crypto::primitive::psf::PSF) trait
+//! - `psf`: The PSF which has to implement the [`PSF`](qfall_tools::primitive::psf::PSF) trait
 //!   and must also be (de-)serializable.
 //! - `storage`: A Hashmap that safes all previously signed messages and their signature
 //! - `hash`: The hash-function which has to map a string into the correct domain
 //!
 //! # Example
-//! ## Signature Scheme from [`PSFGPV`](qfall_crypto::primitive::psf::PSFGPV)
+//! ## Signature Scheme from [`PSFGPV`](qfall_tools::primitive::psf::PSFGPV)
 //! ```
 //! use qfall_schemes::signature::{fdh::FDHGPV, SignatureScheme};
 //!

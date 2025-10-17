@@ -16,14 +16,14 @@
 //! using a storage, so it is stateless.
 //!
 //! Requirements
-//! - `psf`: The PSF which has to implement the [`PSF`](qfall_crypto::primitive::psf::PSF) trait
+//! - `psf`: The PSF which has to implement the [`PSF`](qfall_tools::primitive::psf::PSF) trait
 //!   and must also be (de-)serializable.
 //! - `hash`: The hash-function which has to map a string into the correct domain.
 //! - `randomness_length`: The length of the salt that is added to the string before
 //!   hashing.
 //!
 //! # Example
-//! ## Signature Scheme from [`PSFGPV`](qfall_crypto::primitive::psf::PSFGPV)
+//! ## Signature Scheme from [`PSFGPV`](qfall_tools::primitive::psf::PSFGPV)
 //! ```
 //! use qfall_schemes::signature::{pfdh::PFDHGPV, SignatureScheme};
 //!
