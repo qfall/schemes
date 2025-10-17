@@ -7,10 +7,8 @@
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
 //! # What is qFALL-schemes?
-//! qFall-schemes provides cryptographic basics such as mathematical primitives,
-//! fundamental lattice-based cryptographic constructions, and samplable distributions/
-//! possibilities to sample instances of lattice problems to prototype
-//! lattice-based cryptographic constructions and more.
+//! qFall-schemes provides lattice-based cryptographic constructions to enable prototyping
+//! based on the existing constructions.
 //!
 //! Currently qFALL-schemes supports 3 main construction types:
 //! - [Identity-Based Encryptions](identity_based_encryption::IBEScheme)
@@ -28,19 +26,8 @@
 //! You can find a dedicated [tutorial](https://qfall.github.io/book/index.html) to qFALL-schemes on our [website](https://qfall.github.io/).
 //! The tutorial explains the basic steps starting from installation and
 //! continues with basic usage.
-//! qfall-schemes is co-developed together with qFALL-math and qFALL-tools which provides the basic
+//! qfall-schemes is co-developed together with qFALL-math and qFALL-tools which provide the
 //! foundation that is used to implement the cryptographic constructions.
-//!
-//! This module contains fundamental cryptographic constructions, on which other
-//! constructions can be build on.
-//!
-//! Among others, these include encryption schemes and signature schemes.
-//! A construction is always build the same way:
-//!
-//! 1. A trait that combines the common feature, e.g.
-//!    [`public key encryption`](pk_encryption::PKEncryptionScheme).
-//! 2. Explicit implementations of the trait, e.g.
-//!    [`RingLPR`](pk_encryption::RingLPR).
 
 pub mod hash;
 pub mod identity_based_encryption;
