@@ -1,0 +1,88 @@
+name: Pipeline
+# consistency regarding formatting and idiomatic Rust
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - "**"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTDOCFLAGS: "-Dwarnings"
+
+jobs:
+  pipeline:
+    name: Pipeline - code coverage + dependency check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup dtolnay/rust-toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+
+      # load project cache to reduce compilation time
+      - name: Setup project cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Set environment variables
+        run: |
+          echo "PROJECT_NAME=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0] | [ .name ] | join("")')" >> $GITHUB_ENV
+          echo "PROJECT_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0] | [ .version ] | join("")')" >> $GITHUB_ENV
+
+      - name: Update dependencies
+        run: cargo update
+      - name: Build
+        run: cargo build
+      - name: Generate docs
+        run: cargo doc
+      - name: Run doc tests # Unit tests are run by tarpaulin
+        run: cargo test --doc --verbose
+
+      - name: Install cargo-tarpaulin
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: cargo-tarpaulin
+      - name: Calculate test coverage
+        run: cargo tarpaulin --out Html
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROJECT_NAME }}-code_coverage_report-v${{ env.PROJECT_VERSION }}
+          path: tarpaulin-report.html
+
+      # Lints: Clippy and Fmt
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+      - name: Format
+        run: cargo fmt --all -- --check
+
+      # Cargo check for security issues
+      - name: Install cargo-audit
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: cargo-audit
+      - name: Security audit
+        run: cargo audit
+
+      # Check for outdated dependencies
+      - name: Install cargo-outdated
+        uses: dtolnay/install@cargo-outdated
+      - name: Outdated dependencies
+        run: cargo outdated --exit-code 1
