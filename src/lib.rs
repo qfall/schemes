@@ -28,7 +28,7 @@
 //! You can find a dedicated [tutorial](https://qfall.github.io/book/index.html) to qFALL-schemes on our [website](https://qfall.github.io/).
 //! The tutorial explains the basic steps starting from installation and
 //! continues with basic usage.
-//! qfall-schemes is co-developed together with qFALL-math and qfall-crypto which provides the basic
+//! qfall-schemes is co-developed together with qFALL-math and qFALL-tools which provides the basic
 //! foundation that is used to implement the cryptographic constructions.
 //!
 //! This module contains fundamental cryptographic constructions, on which other
