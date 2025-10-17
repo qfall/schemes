@@ -2,7 +2,7 @@
 //
 // This file is part of qFALL-schemes.
 //
-// qFALL-crypto is free software: you can redistribute it and/or modify it under
+// qfall-schemes is free software: you can redistribute it and/or modify it under
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
@@ -27,8 +27,8 @@ use std::collections::HashMap;
 
 /// Initializes an FDH signature scheme from a [`PSFGPVRing`].
 /// The trapdoor is sampled with a Gaussian parameter of 1.005
-/// as done in [\[3\]](<crate::sample::g_trapdoor>) who derived it from
-/// [\[5\]](<crate::sample::g_trapdoor>).
+/// as done in [\[3\]](<qfall_crypto::sample::g_trapdoor>) who derived it from
+/// [\[5\]](<qfall_crypto::sample::g_trapdoor>).
 ///
 /// This function corresponds to an implementation of an FDH-signature
 /// scheme with the explicit PSF [`PSFGPVRing`] which is generated using

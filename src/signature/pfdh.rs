@@ -2,7 +2,7 @@
 //
 // This file is part of qFALL-schemes.
 //
-// qFALL-crypto is free software: you can redistribute it and/or modify it under
+// qfall-schemes is free software: you can redistribute it and/or modify it under
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
@@ -16,14 +16,14 @@
 //! using a storage, so it is stateless.
 //!
 //! Requirements
-//! - `psf`: The PSF which has to implement the [`PSF`](crate::primitive::psf::PSF) trait
+//! - `psf`: The PSF which has to implement the [`PSF`](qfall_crypto::primitive::psf::PSF) trait
 //!   and must also be (de-)serializable.
 //! - `hash`: The hash-function which has to map a string into the correct domain.
 //! - `randomness_length`: The length of the salt that is added to the string before
 //!   hashing.
 //!
 //! # Example
-//! ## Signature Scheme from [`PSFGPV`](crate::primitive::psf::PSFGPV)
+//! ## Signature Scheme from [`PSFGPV`](qfall_crypto::primitive::psf::PSFGPV)
 //! ```
 //! use qfall_schemes::signature::{pfdh::PFDHGPV, SignatureScheme};
 //!
