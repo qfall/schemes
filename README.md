@@ -23,7 +23,7 @@ It provides a step-by-step guide to install the required libraries and gives fur
 
 ## What does qFALL-schemes offer?
 
-qFALL-crypto offers a variety of implementations of cryptographic schemes, constructions, and primitives.
+qFALL-schemes offers a variety of implementations of cryptographic schemes, constructions, and primitives.
 We provide a brief overview in the following list.
 For a more detailed description, please refer to [our tutorial section](https://qfall.github.io/book/crypto/features.html).
 
@@ -55,7 +55,7 @@ Permissions of this weak copyleft license are conditioned on making available so
 Please use the following bibtex entry to cite [qFALL-schemes](https://github.com/qfall/schemes):
 
 ```text
-@misc{qFALL-crypto,
+@misc{qFALL-schemes,
     author = {Porzenheim, Laurens and Beckmann, Marvin and Kramer, Paul and Milewski, Phil and Moog, Sven and Schmidt, Marcel and Siemer, Niklas},
     title = {qFALL-crypto v0.0},
     howpublished = {Online: \url{https://github.com/qfall/crypto}},

@@ -1,6 +1,6 @@
 // Copyright © 2023 Niklas Siemer, Marvin Beckmann
 //
-// This file is part of qFALL-crypto.
+// This file is part of qFALL-schemes.
 //
 // qFALL-crypto is free software: you can redistribute it and/or modify it under
 // the terms of the Mozilla Public License Version 2.0 as published by the
