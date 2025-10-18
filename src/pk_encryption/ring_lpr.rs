@@ -309,14 +309,6 @@ impl RingLPR {
 
         Ok(())
     }
-
-    /// This function instantiates a 128-bit secure [`RingLPR`] scheme.
-    ///
-    /// The public parameters used for this scheme were generated via `RingLPR::new_from_n(512)`
-    /// and its bit-security determined via the [lattice estimator](https://github.com/malb/lattice-estimator).
-    pub fn secure128() -> Self {
-        Self::new(512, 92897729, 0.000005)
-    }
 }
 
 impl Default for RingLPR {
@@ -561,16 +553,6 @@ mod test_pp_generation {
     #[should_panic]
     fn invalid_n() {
         RingLPR::new_from_n(9);
-    }
-
-    /// Checks whether `secure128` outputs a new instance with correct and secure
-    /// parameters.
-    #[test]
-    fn secure128_validity() {
-        let scheme = RingLPR::secure128();
-
-        assert!(scheme.check_correctness().is_ok());
-        assert!(scheme.check_security().is_ok());
     }
 }
 

@@ -312,14 +312,6 @@ impl RegevWithDiscreteGaussianRegularity {
 
         Ok(())
     }
-
-    /// This function instantiates a 128-bit secure [`RegevWithDiscreteGaussianRegularity`] scheme.
-    ///
-    /// The public parameters used for this scheme were generated via `RegevWithDiscreteGaussianRegularity::new_from_n(350)`
-    /// and its bit-security determined via the [lattice estimator](https://github.com/malb/lattice-estimator).
-    pub fn secure128() -> Self {
-        Self::new(350, 5248, 29892991, 12.357, 0.00009)
-    }
 }
 
 impl Default for RegevWithDiscreteGaussianRegularity {
@@ -539,16 +531,6 @@ mod test_pp_generation {
     #[should_panic]
     fn invalid_n() {
         RegevWithDiscreteGaussianRegularity::new_from_n(1);
-    }
-
-    /// Checks whether `secure128` outputs a new instance with correct and secure
-    /// parameters.
-    #[test]
-    fn secure128_validity() {
-        let dr = RegevWithDiscreteGaussianRegularity::secure128();
-
-        assert!(dr.check_correctness().is_ok());
-        assert!(dr.check_security().is_ok());
     }
 }
 

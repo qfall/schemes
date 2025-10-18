@@ -282,14 +282,6 @@ impl LPR {
 
         Ok(())
     }
-
-    /// This function instantiates a 128-bit secure [`LPR`] scheme.
-    ///
-    /// The public parameters used for this scheme were generated via `LPR::new_from_n(350)`
-    /// and its bit-security determined via the [lattice estimator](https://github.com/malb/lattice-estimator).
-    pub fn secure128() -> Self {
-        Self::new(500, 76859609, 0.000005)
-    }
 }
 
 impl Default for LPR {
@@ -542,16 +534,6 @@ mod test_pp_generation {
     #[should_panic]
     fn invalid_n() {
         LPR::new_from_n(9);
-    }
-
-    /// Checks whether `secure128` outputs a new instance with correct and secure
-    /// parameters.
-    #[test]
-    fn secure128_validity() {
-        let lpr = LPR::secure128();
-
-        assert!(lpr.check_correctness().is_ok());
-        assert!(lpr.check_security().is_ok());
     }
 }
 
