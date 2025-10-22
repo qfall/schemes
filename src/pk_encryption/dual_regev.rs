@@ -292,14 +292,6 @@ impl DualRegev {
 
         Ok(())
     }
-
-    /// This function instantiates a 128-bit secure [`DualRegev`] scheme.
-    ///
-    /// The public parameters used for this scheme were generated via `DualRegev::new_from_n(350)`
-    /// and its bit-security determined via the [lattice estimator](https://github.com/malb/lattice-estimator).
-    pub fn secure128() -> Self {
-        Self::new(230, 5313, 7764299, 0.0011)
-    }
 }
 
 impl Default for DualRegev {
@@ -523,16 +515,6 @@ mod test_pp_generation {
     #[should_panic]
     fn invalid_n() {
         DualRegev::new_from_n(9);
-    }
-
-    /// Checks whether `secure128` outputs a new instance with correct and secure
-    /// parameters.
-    #[test]
-    fn secure128_validity() {
-        let dr = DualRegev::secure128();
-
-        assert!(dr.check_correctness().is_ok());
-        assert!(dr.check_security().is_ok());
     }
 }
 

@@ -293,14 +293,6 @@ impl Regev {
 
         Ok(())
     }
-
-    /// This function instantiates a 128-bit secure [`Regev`] scheme.
-    ///
-    /// The public parameters used for this scheme were generated via `Regev::new_from_n(350)`
-    /// and its bit-security determined via the [lattice estimator](https://github.com/malb/lattice-estimator).
-    pub fn secure128() -> Self {
-        Self::new(230, 5313, 7764299, 0.0011)
-    }
 }
 
 impl Default for Regev {
@@ -525,16 +517,6 @@ mod test_pp_generation {
     #[should_panic]
     fn invalid_n() {
         Regev::new_from_n(9);
-    }
-
-    /// Checks whether `secure128` outputs a new instance with correct and secure
-    /// parameters.
-    #[test]
-    fn secure128_validity() {
-        let regev = Regev::secure128();
-
-        assert!(regev.check_correctness().is_ok());
-        assert!(regev.check_security().is_ok());
     }
 }
 
