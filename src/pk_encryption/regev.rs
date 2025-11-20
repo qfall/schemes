@@ -345,15 +345,9 @@ impl PKEncryptionScheme for Regev {
         // s <- Z_q^n
         let vec_s = MatZq::sample_uniform(&self.n, 1, &self.q);
         // e^t <- χ^m
-        let vec_e_t = MatZq::sample_discrete_gauss(
-            1,
-            &self.m,
-            &self.q,
-            &self.n,
-            0,
-            &self.alpha * Z::from(&self.q),
-        )
-        .unwrap();
+        let vec_e_t =
+            MatZq::sample_discrete_gauss(1, &self.m, &self.q, 0, &self.alpha * Z::from(&self.q))
+                .unwrap();
 
         // b^t = s^t * A + e^t
         let vec_b_t = vec_s.transpose() * &mat_a + vec_e_t;

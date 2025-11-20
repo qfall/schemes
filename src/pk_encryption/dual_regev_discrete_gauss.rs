@@ -359,7 +359,7 @@ impl PKEncryptionScheme for DualRegevWithDiscreteGaussianRegularity {
     /// ```
     fn gen(&self) -> (Self::PublicKey, Self::SecretKey) {
         // e <- SampleD over lattice Z^m, center 0 with Gaussian parameter r
-        let vec_e = MatZq::sample_d_common(&self.m, &self.q, &self.n, &self.r).unwrap();
+        let vec_e = MatZq::sample_discrete_gauss(&self.m, 1, &self.q, 0, &self.r).unwrap();
         // A <- Z_q^{n x m}
         let mat_a = MatZq::sample_uniform(&self.n, &self.m, &self.q);
 
@@ -399,18 +399,12 @@ impl PKEncryptionScheme for DualRegevWithDiscreteGaussianRegularity {
         // s <- Z_q^n
         let vec_s = MatZq::sample_uniform(&self.n, 1, &self.q);
         // vec_x <- χ^m
-        let vec_x = MatZq::sample_discrete_gauss(
-            &self.m,
-            1,
-            &self.q,
-            &self.n,
-            0,
-            &(&self.alpha * Z::from(&self.q)),
-        )
-        .unwrap();
+        let vec_x =
+            MatZq::sample_discrete_gauss(&self.m, 1, &self.q, 0, &(&self.alpha * Z::from(&self.q)))
+                .unwrap();
 
         // x <- χ
-        let x = Z::sample_discrete_gauss(&self.n, 0, &(&self.alpha * Z::from(&self.q))).unwrap();
+        let x = Z::sample_discrete_gauss(0, &(&self.alpha * Z::from(&self.q))).unwrap();
 
         // p = u^t * s + vec_x
         let vec_p = &pk.0.transpose() * &vec_s + vec_x;

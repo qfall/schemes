@@ -353,21 +353,11 @@ impl PKEncryptionScheme for RingLPR {
         // a <- R_q
         let a = PolynomialRingZq::sample_uniform(&self.q);
         // s <- χ
-        let s = PolynomialRingZq::sample_discrete_gauss(
-            &self.q,
-            &self.n,
-            0,
-            &self.alpha * &self.q.get_q(),
-        )
-        .unwrap();
+        let s = PolynomialRingZq::sample_discrete_gauss(&self.q, 0, &self.alpha * &self.q.get_q())
+            .unwrap();
         // e <- χ
-        let e = PolynomialRingZq::sample_discrete_gauss(
-            &self.q,
-            &self.n,
-            0,
-            &self.alpha * &self.q.get_q(),
-        )
-        .unwrap();
+        let e = PolynomialRingZq::sample_discrete_gauss(&self.q, 0, &self.alpha * &self.q.get_q())
+            .unwrap();
 
         // b = s * a + e
         let b = &a * &s + e;
@@ -409,29 +399,14 @@ impl PKEncryptionScheme for RingLPR {
         let mu_q_half = encode_z_bitwise_in_polynomialringzq(&self.q, &mu);
 
         // r <- χ
-        let r = PolynomialRingZq::sample_discrete_gauss(
-            &self.q,
-            &self.n,
-            0,
-            &self.alpha * &self.q.get_q(),
-        )
-        .unwrap();
+        let r = PolynomialRingZq::sample_discrete_gauss(&self.q, 0, &self.alpha * &self.q.get_q())
+            .unwrap();
         // e1 <- χ
-        let e1 = PolynomialRingZq::sample_discrete_gauss(
-            &self.q,
-            &self.n,
-            0,
-            &self.alpha * &self.q.get_q(),
-        )
-        .unwrap();
+        let e1 = PolynomialRingZq::sample_discrete_gauss(&self.q, 0, &self.alpha * &self.q.get_q())
+            .unwrap();
         // e2 <- χ
-        let e2 = PolynomialRingZq::sample_discrete_gauss(
-            &self.q,
-            &self.n,
-            0,
-            &self.alpha * &self.q.get_q(),
-        )
-        .unwrap();
+        let e2 = PolynomialRingZq::sample_discrete_gauss(&self.q, 0, &self.alpha * &self.q.get_q())
+            .unwrap();
 
         // u = a * r + e1
         let u = &pk.0 * &r + e1;

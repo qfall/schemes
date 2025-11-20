@@ -385,7 +385,6 @@ impl PKEncryptionScheme for DualRegev {
             1,
             &(&self.m + 1),
             &self.q,
-            &self.n,
             0,
             &self.alpha * Z::from(&self.q),
         )
