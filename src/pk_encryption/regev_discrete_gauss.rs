@@ -365,15 +365,9 @@ impl PKEncryptionScheme for RegevWithDiscreteGaussianRegularity {
         // A <- Z_q^{n x m}
         let mat_a = MatZq::sample_uniform(&self.n, &self.m, &self.q);
         // x <- χ^m
-        let vec_x = MatZq::sample_discrete_gauss(
-            &self.m,
-            1,
-            &self.q,
-            &self.n,
-            0,
-            &(&self.alpha * Z::from(&self.q)),
-        )
-        .unwrap();
+        let vec_x =
+            MatZq::sample_discrete_gauss(&self.m, 1, &self.q, 0, &(&self.alpha * Z::from(&self.q)))
+                .unwrap();
         // p = A^t * s + x
         let vec_p = mat_a.transpose() * &vec_s + vec_x;
 
@@ -407,7 +401,7 @@ impl PKEncryptionScheme for RegevWithDiscreteGaussianRegularity {
         let message: Z = message.into() % 2;
 
         // e <- SampleD over lattice Z^m, center 0 with Gaussian parameter r
-        let vec_e = MatZq::sample_d_common(&self.m, &self.q, &self.n, &self.r).unwrap();
+        let vec_e = MatZq::sample_discrete_gauss(&self.m, 1, &self.q, 0, &self.r).unwrap();
 
         // u = A * e
         let vec_u = &pk.0 * &vec_e;

@@ -331,25 +331,13 @@ impl PKEncryptionScheme for LPR {
         // A <- Z_q^{n x n}
         let mat_a = MatZq::sample_uniform(&self.n, &self.n, &self.q);
         // s <- χ^n
-        let vec_s = MatZq::sample_discrete_gauss(
-            &self.n,
-            1,
-            &self.q,
-            &self.n,
-            0,
-            &self.alpha * Z::from(&self.q),
-        )
-        .unwrap();
+        let vec_s =
+            MatZq::sample_discrete_gauss(&self.n, 1, &self.q, 0, &self.alpha * Z::from(&self.q))
+                .unwrap();
         // e <- χ^n
-        let vec_e_t = MatZq::sample_discrete_gauss(
-            1,
-            &self.n,
-            &self.q,
-            &self.n,
-            0,
-            &self.alpha * Z::from(&self.q),
-        )
-        .unwrap();
+        let vec_e_t =
+            MatZq::sample_discrete_gauss(1, &self.n, &self.q, 0, &self.alpha * Z::from(&self.q))
+                .unwrap();
 
         // b^t = s^t * A + e^t
         let vec_b_t = vec_s.transpose() * &mat_a + vec_e_t;
@@ -388,21 +376,14 @@ impl PKEncryptionScheme for LPR {
         let message: Z = message.into() % 2;
 
         // x <- χ^n
-        let vec_r = MatZq::sample_discrete_gauss(
-            &self.n,
-            1,
-            &self.q,
-            &self.n,
-            0,
-            &self.alpha * Z::from(&self.q),
-        )
-        .unwrap();
+        let vec_r =
+            MatZq::sample_discrete_gauss(&self.n, 1, &self.q, 0, &self.alpha * Z::from(&self.q))
+                .unwrap();
         // e <- χ^{n+1}
         let vec_e = MatZq::sample_discrete_gauss(
             &(&self.n + 1),
             1,
             &self.q,
-            &self.n,
             0,
             &self.alpha * Z::from(&self.q),
         )
