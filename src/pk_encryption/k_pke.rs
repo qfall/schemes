@@ -15,7 +15,8 @@
 use crate::pk_encryption::PKEncryptionScheme;
 use qfall_math::{
     integer::Z,
-    integer_mod_q::{MatPolynomialRingZq, ModulusPolynomialRingZq, PolynomialRingZq},
+    integer_mod_q::{MatNTTPolynomialRingZq, MatPolynomialRingZq, ModulusPolynomialRingZq},
+    traits::{MatrixGetEntry, MatrixSetEntry},
 };
 use qfall_tools::utils::{
     common_encodings::{
@@ -24,6 +25,7 @@ use qfall_tools::utils::{
     common_moduli::new_anticyclic,
 };
 use serde::{Deserialize, Serialize};
+use std::ops::{Add, Mul, Sub};
 
 /// This is a naive toy-implementation of the [`PKEncryptionScheme`] used
 /// as a basis for ML-KEM.
@@ -64,47 +66,54 @@ pub struct KPKE {
     k: i64,                     // defines both dimensions of matrix A
     eta_1: i64, // defines the binomial distribution of the secret and error drawn in `gen`
     eta_2: i64, // defines the binomial distribution of the error drawn in `enc`
+    use_ntt: bool, // defines whether NTT is used with this set of parameters
 }
 
 impl KPKE {
     /// Returns a [`KPKE`] instance with public parameters according to the ML-KEM-512 specification.
-    pub fn ml_kem_512() -> Self {
-        let q = new_anticyclic(256, 3329).unwrap();
+    pub fn ml_kem_512(use_ntt: bool) -> Self {
+        let mut q = new_anticyclic(256, 3329).unwrap();
+        q.set_ntt_unchecked(17);
         Self {
             q,
             k: 2,
             eta_1: 3,
             eta_2: 2,
+            use_ntt,
         }
     }
 
     /// Returns a [`KPKE`] instance with public parameters according to the ML-KEM-768 specification.
-    pub fn ml_kem_768() -> Self {
-        let q = new_anticyclic(256, 3329).unwrap();
+    pub fn ml_kem_768(use_ntt: bool) -> Self {
+        let mut q = new_anticyclic(256, 3329).unwrap();
+        q.set_ntt_unchecked(17);
         Self {
             q,
             k: 3,
             eta_1: 2,
             eta_2: 2,
+            use_ntt,
         }
     }
 
     /// Returns a [`KPKE`] instance with public parameters according to the ML-KEM-1024 specification.
-    pub fn ml_kem_1024() -> Self {
-        let q = new_anticyclic(256, 3329).unwrap();
+    pub fn ml_kem_1024(use_ntt: bool) -> Self {
+        let mut q = new_anticyclic(256, 3329).unwrap();
+        q.set_ntt_unchecked(17);
         Self {
             q,
             k: 4,
             eta_1: 2,
             eta_2: 2,
+            use_ntt,
         }
     }
 }
 
 impl PKEncryptionScheme for KPKE {
-    type PublicKey = (MatPolynomialRingZq, MatPolynomialRingZq);
-    type SecretKey = MatPolynomialRingZq;
-    type Cipher = (MatPolynomialRingZq, PolynomialRingZq);
+    type PublicKey = (MatrixStruct, MatrixStruct);
+    type SecretKey = MatrixStruct;
+    type Cipher = (MatrixStruct, MatrixStruct);
 
     /// Generates a `(pk, sk)` pair by following these steps:
     /// - A <- R_q^{k x k}
@@ -123,34 +132,52 @@ impl PKEncryptionScheme for KPKE {
     /// ```
     fn gen(&self) -> (Self::PublicKey, Self::SecretKey) {
         // 5 𝐀[𝑖,𝑗] ← SampleNTT(𝜌‖𝑗‖𝑖)
-        // Reminder: NTT-representation, sampling and multiplication are not part of this prototype
-        let mat_a = MatPolynomialRingZq::sample_uniform(self.k, self.k, &self.q);
+        let mat_a_t = if self.use_ntt {
+            MatrixStruct::MatNTT(MatNTTPolynomialRingZq::sample_uniform(
+                self.k as usize,
+                self.k as usize,
+                &self.q,
+            ))
+        } else {
+            MatrixStruct::Matrix(MatPolynomialRingZq::sample_uniform(self.k, self.k, &self.q))
+        };
         // 9 𝐬[𝑖] ← SamplePolyCBD_𝜂_1(PRF_𝜂_1 (𝜎, 𝑁))
-        let vec_s = MatPolynomialRingZq::sample_binomial_with_offset(
-            self.k,
+        let vec_s_t = MatPolynomialRingZq::sample_binomial_with_offset(
             1,
+            self.k,
             &self.q,
             -self.eta_1,
             2 * self.eta_1,
             0.5,
         )
         .unwrap();
+        let vec_s_t = if self.use_ntt {
+            MatrixStruct::MatNTT(vec_s_t.ntt())
+        } else {
+            MatrixStruct::Matrix(vec_s_t)
+        };
+
         // 13 𝐞[𝑖] ← SamplePolyCBD_𝜂_1(PRF_𝜂_1 (𝜎, 𝑁))
-        let vec_e = MatPolynomialRingZq::sample_binomial_with_offset(
-            self.k,
+        let vec_e_t = MatPolynomialRingZq::sample_binomial_with_offset(
             1,
+            self.k,
             &self.q,
             -self.eta_1,
             2 * self.eta_1,
             0.5,
         )
         .unwrap();
+        let vec_e_t = if self.use_ntt {
+            MatrixStruct::MatNTT(vec_e_t.ntt())
+        } else {
+            MatrixStruct::Matrix(vec_e_t)
+        };
 
         // 18 𝐭 ← 𝐀 ∘ 𝐬 + 𝐞
-        let vec_t = &mat_a * &vec_s + vec_e;
+        let vec_t = &(&vec_s_t * &mat_a_t) + &vec_e_t;
 
-        let pk = (mat_a.transpose(), vec_t);
-        let sk = vec_s;
+        let pk = (mat_a_t, vec_t);
+        let sk = vec_s_t;
         (pk, sk)
     }
 
@@ -188,6 +215,12 @@ impl PKEncryptionScheme for KPKE {
             0.5,
         )
         .unwrap();
+        let vec_y = if self.use_ntt {
+            MatrixStruct::MatNTT(vec_y.ntt())
+        } else {
+            MatrixStruct::Matrix(vec_y)
+        };
+
         // 𝐞_𝟏[𝑖] ← SamplePolyCBD_𝜂_2(PRF_𝜂_2 (𝑟, 𝑁))
         let vec_e_1 = MatPolynomialRingZq::sample_binomial_with_offset(
             self.k,
@@ -198,23 +231,43 @@ impl PKEncryptionScheme for KPKE {
             0.5,
         )
         .unwrap();
+        let vec_e_1 = if self.use_ntt {
+            MatrixStruct::MatNTT(vec_e_1.ntt())
+        } else {
+            MatrixStruct::Matrix(vec_e_1)
+        };
+
         // 𝑒_2 ← SamplePolyCBD_𝜂_2(PRF_𝜂_2 (𝑟, 𝑁))
-        let e_2 = PolynomialRingZq::sample_binomial_with_offset(
+        let e_2 = MatPolynomialRingZq::sample_binomial_with_offset(
+            1,
+            1,
             &self.q,
             -self.eta_2,
             2 * self.eta_2,
             0.5,
         )
         .unwrap();
+        let e_2 = if self.use_ntt {
+            MatrixStruct::MatNTT(e_2.ntt())
+        } else {
+            MatrixStruct::Matrix(e_2)
+        };
 
         // 19 𝐮 ← NTT^−1(𝐀^⊺ ∘ 𝐲) + 𝐞_𝟏
-        let vec_u = &pk.0 * &vec_y + vec_e_1;
+        let vec_u = &(&pk.0 * &vec_y) + &vec_e_1;
 
         // 20 𝜇 ← Decompress_1(ByteDecode_1(𝑚))
         let mu = encode_z_bitwise_in_polynomialringzq(&self.q, &message.into());
+        let mut mat_mu = MatPolynomialRingZq::new(1, 1, &self.q);
+        unsafe { mat_mu.set_entry_unchecked(0, 0, mu) };
+        let mat_mu = if self.use_ntt {
+            MatrixStruct::MatNTT(mat_mu.ntt())
+        } else {
+            MatrixStruct::Matrix(mat_mu)
+        };
 
         // 21 𝑣 ← NTT^−1(𝐭^⊺ ∘ 𝐲) + 𝑒_2 + 𝜇
-        let v = pk.1.dot_product(&vec_y).unwrap() + e_2 + mu;
+        let v = &(&(&pk.1 * &vec_y) + &e_2) + &mat_mu;
 
         (vec_u, v)
     }
@@ -243,7 +296,12 @@ impl PKEncryptionScheme for KPKE {
     /// ```
     fn dec(&self, sk: &Self::SecretKey, (u, v): &Self::Cipher) -> Z {
         // 6 𝑤 ← 𝑣 − NTT^−1(𝐬^⊺ ∘ NTT(𝐮))
-        let w = v - sk.dot_product(u).unwrap();
+        let mat_w = v - &(sk * u);
+        let mat_w = match mat_w {
+            MatrixStruct::MatNTT(mat_ntt_w) => mat_ntt_w.inv_ntt(),
+            MatrixStruct::Matrix(mat_w) => mat_w,
+        };
+        let w = unsafe { mat_w.get_entry_unchecked(0, 0) };
 
         // 7 𝑚 ← ByteEncode_1(Compress_1(𝑤))
         decode_z_bitwise_from_polynomialringzq(self.q.get_q(), &w)
@@ -258,7 +316,11 @@ mod test_kpke {
     /// performing a round trip of several messages.
     #[test]
     fn correctness() {
-        let k_pkes = [KPKE::ml_kem_512(), KPKE::ml_kem_768(), KPKE::ml_kem_1024()];
+        let k_pkes = [
+            KPKE::ml_kem_512(true),
+            KPKE::ml_kem_768(false),
+            KPKE::ml_kem_1024(false),
+        ];
         for k_pke in k_pkes {
             let messages = [0, 1, 13, 255, 2047, 4294967295_u32];
 
@@ -268,6 +330,68 @@ mod test_kpke {
                 let m = k_pke.dec(&sk, &c);
 
                 assert_eq!(message, m);
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum MatrixStruct {
+    MatNTT(MatNTTPolynomialRingZq),
+    Matrix(MatPolynomialRingZq),
+}
+
+impl Add for &MatrixStruct {
+    type Output = MatrixStruct;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (MatrixStruct::MatNTT(mat_a), MatrixStruct::MatNTT(mat_b)) => {
+                MatrixStruct::MatNTT(mat_a + mat_b)
+            }
+            (MatrixStruct::Matrix(mat_a), MatrixStruct::Matrix(mat_b)) => {
+                MatrixStruct::Matrix(mat_a + mat_b)
+            }
+            (a, b) => {
+                panic!("Type mismatch in matrix addition: {:?} vs {:?}", a, b);
+            }
+        }
+    }
+}
+
+impl Sub for &MatrixStruct {
+    type Output = MatrixStruct;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (MatrixStruct::MatNTT(mat_a), MatrixStruct::MatNTT(mat_b)) => {
+                MatrixStruct::MatNTT(mat_a - mat_b)
+            }
+            (MatrixStruct::Matrix(mat_a), MatrixStruct::Matrix(mat_b)) => {
+                MatrixStruct::Matrix(mat_a - mat_b)
+            }
+            (a, b) => {
+                panic!("Type mismatch in matrix subtraction: {:?} vs {:?}", a, b);
+            }
+        }
+    }
+}
+
+impl Mul for &MatrixStruct {
+    type Output = MatrixStruct;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            // Perform the operation by moving out the inner structs
+            // and relying on the inner struct's Add implementation
+            (MatrixStruct::MatNTT(mat_a), MatrixStruct::MatNTT(mat_b)) => {
+                MatrixStruct::MatNTT(mat_a * mat_b)
+            }
+            (MatrixStruct::Matrix(mat_a), MatrixStruct::Matrix(mat_b)) => {
+                MatrixStruct::Matrix(mat_a * mat_b)
+            }
+            (a, b) => {
+                panic!("Type mismatch in matrix multiplication: {:?} vs {:?}", a, b);
             }
         }
     }
