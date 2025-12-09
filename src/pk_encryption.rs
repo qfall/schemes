@@ -84,7 +84,7 @@ pub trait PKEncryptionScheme {
     /// - `cipher`: specifies the ciphertext to be decrypted
     ///
     /// Returns the decryption of `cipher` as a [`Z`] instance.
-    fn dec(&self, sk: &Self::SecretKey, cipher: &Self::Cipher) -> Z;
+    fn dec(&self, sk: &Self::SecretKey, cipher: Self::Cipher) -> Z;
 }
 
 /// This trait just exists s.t. we can pass `self` in as mutable for more advanced constructions, which use a storage.
@@ -115,7 +115,7 @@ pub trait PKEncryptionSchemeMut {
     /// - `cipher`: specifies the ciphertext to be decrypted
     ///
     /// Returns the decryption of `cipher` as a [`Z`] instance.
-    fn dec(&mut self, sk: &Self::SecretKey, cipher: &Self::Cipher) -> Z;
+    fn dec(&mut self, sk: &Self::SecretKey, cipher: Self::Cipher) -> Z;
 }
 
 /// This trait generically implements multi-bit encryption
@@ -157,7 +157,7 @@ pub trait GenericMultiBitEncryption: PKEncryptionScheme {
     ///   to be decrypted
     ///
     /// Returns the decryption of `cipher` as a [`Z`] instance.
-    fn dec_multiple_bits(&self, sk: &Self::SecretKey, cipher: &[Self::Cipher]) -> Z {
+    fn dec_multiple_bits(&self, sk: &Self::SecretKey, cipher: Vec<Self::Cipher>) -> Z {
         let mut bits = vec![];
 
         for item in cipher {
