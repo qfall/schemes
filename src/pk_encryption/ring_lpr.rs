@@ -49,7 +49,7 @@ use serde::{Deserialize, Serialize};
 /// let cipher = lpr.enc(&pk, &msg);
 ///
 /// // decrypt
-/// let m = lpr.dec(&sk, &cipher);
+/// let m = lpr.dec(&sk, cipher);
 ///
 /// assert_eq!(msg, m);
 /// ```
@@ -439,7 +439,7 @@ impl PKEncryptionScheme for RingLPR {
     /// let (pk, sk) = lpr.gen();
     /// let cipher = lpr.enc(&pk, 212);
     ///
-    /// let m = lpr.dec(&sk, &cipher);
+    /// let m = lpr.dec(&sk, cipher);
     ///
     /// assert_eq!(Z::from(212), m);
     /// ```

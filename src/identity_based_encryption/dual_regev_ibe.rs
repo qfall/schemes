@@ -56,7 +56,7 @@ use std::collections::HashMap;
 /// let cipher = ibe.enc(&pk, &identity, &msg);
 ///
 /// // decrypt
-/// let m = ibe.dec(&id_sk, &cipher);
+/// let m = ibe.dec(&id_sk, cipher);
 ///
 /// assert_eq!(msg, m)
 /// ```
@@ -415,7 +415,7 @@ impl IBEScheme for DualRegevIBE {
     /// let cipher = ibe.enc(&pk, &identity, &msg);
     ///
     /// // decrypt
-    /// let m = ibe.dec(&id_sk, &cipher);
+    /// let m = ibe.dec(&id_sk, cipher);
     ///
     /// assert_eq!(msg, m)
     /// ```

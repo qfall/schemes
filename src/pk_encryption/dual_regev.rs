@@ -42,7 +42,7 @@ use serde::{Deserialize, Serialize};
 /// let cipher = dual_regev.enc(&pk, &msg);
 ///
 /// // decrypt
-/// let m = dual_regev.dec(&sk, &cipher);
+/// let m = dual_regev.dec(&sk, cipher);
 ///
 /// assert_eq!(msg, m);
 /// ```
@@ -421,7 +421,7 @@ impl PKEncryptionScheme for DualRegev {
     /// let (pk, sk) = dual_regev.gen();
     /// let cipher = dual_regev.enc(&pk, 1);
     ///
-    /// let m = dual_regev.dec(&sk, &cipher);
+    /// let m = dual_regev.dec(&sk, cipher);
     ///
     /// assert_eq!(Z::ONE, m);
     /// ```

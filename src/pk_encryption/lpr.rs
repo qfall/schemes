@@ -41,7 +41,7 @@ use serde::{Deserialize, Serialize};
 /// let cipher = lpr.enc(&pk, &msg);
 ///
 /// // decrypt
-/// let m = lpr.dec(&sk, &cipher);
+/// let m = lpr.dec(&sk, cipher);
 ///
 /// assert_eq!(msg, m);
 /// ```
@@ -420,7 +420,7 @@ impl PKEncryptionScheme for LPR {
     /// let (pk, sk) = lpr.gen();
     /// let cipher = lpr.enc(&pk, 1);
     ///
-    /// let m = lpr.dec(&sk, &cipher);
+    /// let m = lpr.dec(&sk, cipher);
     ///
     /// assert_eq!(Z::ONE, m);
     /// ```

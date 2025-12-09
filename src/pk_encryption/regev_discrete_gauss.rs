@@ -45,7 +45,7 @@ use serde::{Deserialize, Serialize};
 /// let cipher = regev.enc(&pk, &msg);
 ///
 /// // decrypt
-/// let m = regev.dec(&sk, &cipher);
+/// let m = regev.dec(&sk, cipher);
 ///
 /// assert_eq!(msg, m);
 /// ```
@@ -430,7 +430,7 @@ impl PKEncryptionScheme for RegevWithDiscreteGaussianRegularity {
     /// let (pk, sk) = regev.gen();
     /// let cipher = regev.enc(&pk, 1);
     ///
-    /// let m = regev.dec(&sk, &cipher);
+    /// let m = regev.dec(&sk, cipher);
     ///
     /// assert_eq!(Z::ONE, m);
     /// ```

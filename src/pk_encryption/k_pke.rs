@@ -54,7 +54,7 @@ use serde::{Deserialize, Serialize};
 /// let cipher = k_pke.enc(&pk, &msg);
 ///
 /// // decrypt the ciphertext
-/// let m = k_pke.dec(&sk, &cipher);
+/// let m = k_pke.dec(&sk, cipher);
 ///
 /// assert_eq!(msg, m);
 /// ```
@@ -252,7 +252,7 @@ impl PKEncryptionScheme for KPKE {
     /// let (pk, sk) = k_pke.gen();
     /// let c = k_pke.enc(&pk, 1);
     ///
-    /// let m = k_pke.dec(&sk, &c);
+    /// let m = k_pke.dec(&sk, c);
     ///
     /// assert_eq!(1, m);
     /// ```
