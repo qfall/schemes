@@ -108,7 +108,7 @@ mod test_ccs_from_ibe {
 
         let (pk, sk) = scheme.gen();
         let cipher = scheme.enc(&pk, &msg);
-        let m = scheme.dec(&sk, &cipher);
+        let m = scheme.dec(&sk, cipher);
         assert_eq!(msg, m);
     }
 
@@ -121,7 +121,7 @@ mod test_ccs_from_ibe {
 
         let (pk, sk) = scheme.gen();
         let cipher = scheme.enc(&pk, &msg);
-        let m = scheme.dec(&sk, &cipher);
+        let m = scheme.dec(&sk, cipher);
         assert_eq!(msg, m);
     }
 }

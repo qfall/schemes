@@ -419,7 +419,7 @@ impl IBEScheme for DualRegevIBE {
     ///
     /// assert_eq!(msg, m)
     /// ```
-    fn dec(&self, sk_id: &Self::SecretKey, cipher: &Self::Cipher) -> Z {
+    fn dec(&self, sk_id: &Self::SecretKey, cipher: Self::Cipher) -> Z {
         self.dual_regev.dec(sk_id, cipher)
     }
 }
@@ -473,7 +473,7 @@ mod test_dual_regev_ibe {
         let (pk, sk) = cryptosystem.setup();
         let id_sk = cryptosystem.extract(&pk, &sk, &id);
         let cipher = cryptosystem.enc(&pk, &id, &msg);
-        let m = cryptosystem.dec(&id_sk, &cipher);
+        let m = cryptosystem.dec(&id_sk, cipher);
 
         assert_eq!(msg, m)
     }
@@ -489,7 +489,7 @@ mod test_dual_regev_ibe {
         let (pk, sk) = cryptosystem.setup();
         let id_sk = cryptosystem.extract(&pk, &sk, &id);
         let cipher = cryptosystem.enc(&pk, &id, &msg);
-        let m = cryptosystem.dec(&id_sk, &cipher);
+        let m = cryptosystem.dec(&id_sk, cipher);
 
         assert_eq!(msg, m)
     }
@@ -505,7 +505,7 @@ mod test_dual_regev_ibe {
         let (pk, sk) = cryptosystem.setup();
         let id_sk = cryptosystem.extract(&pk, &sk, &id);
         let cipher = cryptosystem.enc(&pk, &id, &msg);
-        let m = cryptosystem.dec(&id_sk, &cipher);
+        let m = cryptosystem.dec(&id_sk, cipher);
         assert_eq!(msg, m);
     }
 
@@ -520,7 +520,7 @@ mod test_dual_regev_ibe {
         let (pk, sk) = cryptosystem.setup();
         let id_sk = cryptosystem.extract(&pk, &sk, &id);
         let cipher = cryptosystem.enc(&pk, &id, &msg);
-        let m = cryptosystem.dec(&id_sk, &cipher);
+        let m = cryptosystem.dec(&id_sk, cipher);
         assert_eq!(msg, m);
     }
 
@@ -540,7 +540,7 @@ mod test_dual_regev_ibe {
             let id_sk = cryptosystem.extract(&pk, &sk, &id);
             for _j in 1..=100 {
                 let cipher = cryptosystem.enc(&pk, &id, &msg);
-                let m = cryptosystem.dec(&id_sk, &cipher);
+                let m = cryptosystem.dec(&id_sk, cipher);
 
                 assert_eq!(msg, m);
             }

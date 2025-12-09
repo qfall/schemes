@@ -18,7 +18,7 @@ fn regev_cycle(n: i64) {
 
     let (pk, sk) = regev.gen();
     let cipher = regev.enc(&pk, &msg);
-    let _ = regev.dec(&sk, &cipher);
+    let _ = regev.dec(&sk, cipher);
 }
 
 /// Benchmark [regev_cycle] with `n = 50`.
