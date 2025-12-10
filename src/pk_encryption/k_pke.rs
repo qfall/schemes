@@ -14,7 +14,7 @@
 
 use crate::pk_encryption::PKEncryptionScheme;
 use qfall_math::{
-    integer::Z,
+    integer::{MatPolyOverZ, PolyOverZ, Z},
     integer_mod_q::{MatPolynomialRingZq, ModulusPolynomialRingZq, PolynomialRingZq},
 };
 use qfall_tools::utils::{
@@ -22,7 +22,7 @@ use qfall_tools::utils::{
         decode_z_bitwise_from_polynomialringzq, encode_z_bitwise_in_polynomialringzq,
     },
     common_moduli::new_anticyclic,
-    lossy_compression::LossyCompression,
+    lossy_compression::LossyCompressionFIPS203,
 };
 use serde::{Deserialize, Serialize};
 
@@ -112,7 +112,7 @@ impl KPKE {
 impl PKEncryptionScheme for KPKE {
     type PublicKey = (MatPolynomialRingZq, MatPolynomialRingZq);
     type SecretKey = MatPolynomialRingZq;
-    type Cipher = (MatPolynomialRingZq, PolynomialRingZq);
+    type Cipher = (MatPolyOverZ, PolyOverZ);
 
     /// Generates a `(pk, sk)` pair by following these steps:
     /// - A <- R_q^{k x k}
@@ -217,18 +217,18 @@ impl PKEncryptionScheme for KPKE {
         .unwrap();
 
         // 19 𝐮 ← NTT^−1(𝐀^⊺ ∘ 𝐲) + 𝐞_𝟏
-        let mut vec_u = &pk.0 * &vec_y + vec_e_1;
+        let vec_u = &pk.0 * &vec_y + vec_e_1;
 
         // 20 𝜇 ← Decompress_1(ByteDecode_1(𝑚))
         let mu = encode_z_bitwise_in_polynomialringzq(&self.q, &message.into());
 
         // 21 𝑣 ← NTT^−1(𝐭^⊺ ∘ 𝐲) + 𝑒_2 + 𝜇
-        let mut v = pk.1.dot_product(&vec_y).unwrap() + e_2 + mu;
+        let v = pk.1.dot_product(&vec_y).unwrap() + e_2 + mu;
 
         // 22: 𝑐_1 ← ByteEncode_{𝑑_𝑢}(Compress_{𝑑_𝑢}(𝐮))
-        vec_u.compress(self.d_u);
+        let vec_u = vec_u.lossy_compress(self.d_u);
         // 23: 𝑐_2 ← ByteEncode_{𝑑_𝑣}(Compress_{𝑑_𝑣}(𝑣))
-        v.compress(self.d_v);
+        let v = v.lossy_compress(self.d_v);
 
         (vec_u, v)
     }
@@ -256,11 +256,11 @@ impl PKEncryptionScheme for KPKE {
     ///
     /// assert_eq!(1, m);
     /// ```
-    fn dec(&self, sk: &Self::SecretKey, (mut u, mut v): Self::Cipher) -> Z {
+    fn dec(&self, sk: &Self::SecretKey, (u, v): Self::Cipher) -> Z {
         // 3: 𝐮′ ← Decompress_{𝑑_𝑢}(ByteDecode_{𝑑_𝑢}(𝑐_1))
-        u.decompress(self.d_u);
+        let u = MatPolynomialRingZq::lossy_decompress(&u, self.d_u, &self.q);
         // 4: 𝑣′ ← Decompress_{𝑑_𝑣}(ByteDecode_{𝑑_𝑣}(𝑐_2))
-        v.decompress(self.d_v);
+        let v = PolynomialRingZq::lossy_decompress(&v, self.d_v, &self.q);
 
         // 6 𝑤 ← 𝑣′ − NTT^−1(𝐬^⊺ ∘ NTT(𝐮′))
         let w = v - sk.dot_product(&u).unwrap();
