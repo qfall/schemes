@@ -49,7 +49,7 @@ use serde::{Deserialize, Serialize};
 /// let cipher = lpr.enc(&pk, &msg);
 ///
 /// // decrypt
-/// let m = lpr.dec(&sk, cipher);
+/// let m = lpr.dec(&sk, &cipher);
 ///
 /// assert_eq!(msg, m);
 /// ```
@@ -439,11 +439,11 @@ impl PKEncryptionScheme for RingLPR {
     /// let (pk, sk) = lpr.gen();
     /// let cipher = lpr.enc(&pk, 212);
     ///
-    /// let m = lpr.dec(&sk, cipher);
+    /// let m = lpr.dec(&sk, &cipher);
     ///
     /// assert_eq!(Z::from(212), m);
     /// ```
-    fn dec(&self, sk: &Self::SecretKey, cipher: Self::Cipher) -> Z {
+    fn dec(&self, sk: &Self::SecretKey, cipher: &Self::Cipher) -> Z {
         // res = v - s * u
         let result = &cipher.1 - sk * &cipher.0;
 
@@ -547,7 +547,7 @@ mod test_ring_lpr {
 
         for message in messages {
             let cipher = scheme.enc(&pk, message);
-            let m = scheme.dec(&sk, cipher);
+            let m = scheme.dec(&sk, &cipher);
 
             assert_eq!(Z::from(message), m);
         }
@@ -579,7 +579,7 @@ mod test_ring_lpr {
 
         for message in messages {
             let cipher = scheme.enc(&pk, message);
-            let m = scheme.dec(&sk, cipher);
+            let m = scheme.dec(&sk, &cipher);
 
             assert_eq!(Z::from(message), m);
         }
@@ -594,7 +594,7 @@ mod test_ring_lpr {
 
         for msg in messages {
             let cipher = scheme.enc(&pk, msg);
-            let m = scheme.dec(&sk, cipher);
+            let m = scheme.dec(&sk, &cipher);
 
             assert_eq!(Z::ZERO, m);
         }

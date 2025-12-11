@@ -32,7 +32,7 @@ pub mod dual_regev_ibe_pfdh;
 ///
 /// let (pk, sk) = scheme.gen();
 /// let cipher = scheme.enc(&pk, 0);
-/// let m = scheme.dec(&sk, cipher);
+/// let m = scheme.dec(&sk, &cipher);
 ///
 /// assert_eq!(Z::ZERO, m);
 /// ```
@@ -125,11 +125,11 @@ where
     ///
     /// let (pk, sk) = scheme.gen();
     /// let cipher = scheme.enc(&pk, 1);
-    /// let m = scheme.dec(&sk, cipher);
+    /// let m = scheme.dec(&sk, &cipher);
     ///
     /// assert_eq!(Z::ONE, m);
     /// ```
-    fn dec(&mut self, sk: &Self::SecretKey, cipher: Self::Cipher) -> Z {
+    fn dec(&mut self, sk: &Self::SecretKey, cipher: &Self::Cipher) -> Z {
         if !self
             .signature
             .vfy(cipher.1.to_string(), &cipher.2, &cipher.0)
@@ -138,6 +138,6 @@ where
         }
 
         let secret = self.ibe.extract(&sk.0, &sk.1, &cipher.0.clone().into());
-        self.ibe.dec(&secret, cipher.1)
+        self.ibe.dec(&secret, &cipher.1)
     }
 }

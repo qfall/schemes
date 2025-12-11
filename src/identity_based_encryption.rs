@@ -78,5 +78,5 @@ pub trait IBEScheme {
     /// - `cipher`: specifies the ciphertext to be decrypted
     ///
     /// Returns the decryption of `cipher` as a [`Z`] instance.
-    fn dec(&self, sk: &Self::SecretKey, cipher: Self::Cipher) -> Z;
+    fn dec(&self, sk: &Self::SecretKey, cipher: &Self::Cipher) -> Z;
 }

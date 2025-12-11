@@ -14,7 +14,7 @@ use qfall_schemes::pk_encryption::KPKE;
 fn kpke_cycle(k_pke: &KPKE) {
     let (pk, sk) = k_pke.gen();
     let cipher = k_pke.enc(&pk, 1);
-    let _ = k_pke.dec(&sk, cipher);
+    let _ = k_pke.dec(&sk, &cipher);
 }
 
 /// Benchmark [kpke_cycle] with [KPKE::ml_kem_512].
@@ -54,7 +54,7 @@ fn bench_kpke_dec_512(c: &mut Criterion) {
     c.bench_function("K-PKE dec 512", |b| {
         b.iter_batched(
             || cipher.clone(),
-            |cipher| k_pke.dec(&sk, cipher),
+            |cipher| k_pke.dec(&sk, &cipher),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -97,7 +97,7 @@ fn bench_kpke_dec_768(c: &mut Criterion) {
     c.bench_function("K-PKE dec 768", |b| {
         b.iter_batched(
             || cipher.clone(),
-            |cipher| k_pke.dec(&sk, cipher),
+            |cipher| k_pke.dec(&sk, &cipher),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -140,7 +140,7 @@ fn bench_kpke_dec_1024(c: &mut Criterion) {
     c.bench_function("K-PKE dec 1024", |b| {
         b.iter_batched(
             || cipher.clone(),
-            |cipher| k_pke.dec(&sk, cipher),
+            |cipher| k_pke.dec(&sk, &cipher),
             criterion::BatchSize::SmallInput,
         )
     });

@@ -45,7 +45,7 @@ use serde::{Deserialize, Serialize};
 /// let cipher = dual_regev.enc(&pk, &msg);
 ///
 /// // decrypt
-/// let m = dual_regev.dec(&sk, cipher);
+/// let m = dual_regev.dec(&sk, &cipher);
 ///
 /// assert_eq!(msg, m);
 /// ```
@@ -433,11 +433,11 @@ impl PKEncryptionScheme for DualRegevWithDiscreteGaussianRegularity {
     /// let (pk, sk) = dual_regev.gen();
     /// let cipher = dual_regev.enc(&pk, 1);
     ///
-    /// let m = dual_regev.dec(&sk, cipher);
+    /// let m = dual_regev.dec(&sk, &cipher);
     ///
     /// assert_eq!(Z::ONE, m);
     /// ```
-    fn dec(&self, sk: &Self::SecretKey, cipher: Self::Cipher) -> Z {
+    fn dec(&self, sk: &Self::SecretKey, cipher: &Self::Cipher) -> Z {
         let result = &cipher.1 - sk.dot_product(&cipher.0).unwrap();
         let result: Z = result.get_representative_least_absolute_residue().abs();
 
@@ -547,7 +547,7 @@ mod test_dual_regev {
 
         let (pk, sk) = dr.gen();
         let cipher = dr.enc(&pk, &msg);
-        let m = dr.dec(&sk, cipher);
+        let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
@@ -561,7 +561,7 @@ mod test_dual_regev {
 
         let (pk, sk) = dr.gen();
         let cipher = dr.enc(&pk, &msg);
-        let m = dr.dec(&sk, cipher);
+        let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
@@ -575,7 +575,7 @@ mod test_dual_regev {
 
         let (pk, sk) = dr.gen();
         let cipher = dr.enc(&pk, &msg);
-        let m = dr.dec(&sk, cipher);
+        let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
@@ -589,7 +589,7 @@ mod test_dual_regev {
 
         let (pk, sk) = dr.gen();
         let cipher = dr.enc(&pk, &msg);
-        let m = dr.dec(&sk, cipher);
+        let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
@@ -605,7 +605,7 @@ mod test_dual_regev {
             let msg_mod = Z::from(msg.rem_euclid(2));
 
             let cipher = dr.enc(&pk, msg);
-            let m = dr.dec(&sk, cipher);
+            let m = dr.dec(&sk, &cipher);
 
             assert_eq!(msg_mod, m);
         }
@@ -631,7 +631,7 @@ mod test_multi_bits {
 
             let (pk, sk) = scheme.gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
-            let m = scheme.dec_multiple_bits(&sk, cipher);
+            let m = scheme.dec_multiple_bits(&sk, &cipher);
 
             assert_eq!(msg, m);
         }
@@ -646,7 +646,7 @@ mod test_multi_bits {
 
         let (pk, sk) = scheme.gen();
         let cipher = scheme.enc_multiple_bits(&pk, &msg);
-        let m = scheme.dec_multiple_bits(&sk, cipher);
+        let m = scheme.dec_multiple_bits(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
@@ -664,7 +664,7 @@ mod test_multi_bits {
 
             let (pk, sk) = scheme.gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
-            let m = scheme.dec_multiple_bits(&sk, cipher);
+            let m = scheme.dec_multiple_bits(&sk, &cipher);
 
             assert_eq!(msg.abs(), m);
         }

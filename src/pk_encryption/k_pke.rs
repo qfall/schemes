@@ -54,7 +54,7 @@ use serde::{Deserialize, Serialize};
 /// let cipher = k_pke.enc(&pk, &msg);
 ///
 /// // decrypt the ciphertext
-/// let m = k_pke.dec(&sk, cipher);
+/// let m = k_pke.dec(&sk, &cipher);
 ///
 /// assert_eq!(msg, m);
 /// ```
@@ -252,15 +252,15 @@ impl PKEncryptionScheme for KPKE {
     /// let (pk, sk) = k_pke.gen();
     /// let c = k_pke.enc(&pk, 1);
     ///
-    /// let m = k_pke.dec(&sk, c);
+    /// let m = k_pke.dec(&sk, &c);
     ///
     /// assert_eq!(1, m);
     /// ```
-    fn dec(&self, sk: &Self::SecretKey, (u, v): Self::Cipher) -> Z {
+    fn dec(&self, sk: &Self::SecretKey, (u, v): &Self::Cipher) -> Z {
         // 3: 𝐮′ ← Decompress_{𝑑_𝑢}(ByteDecode_{𝑑_𝑢}(𝑐_1))
-        let u = MatPolynomialRingZq::lossy_decompress(&u, self.d_u, &self.q);
+        let u = MatPolynomialRingZq::lossy_decompress(u, self.d_u, &self.q);
         // 4: 𝑣′ ← Decompress_{𝑑_𝑣}(ByteDecode_{𝑑_𝑣}(𝑐_2))
-        let v = PolynomialRingZq::lossy_decompress(&v, self.d_v, &self.q);
+        let v = PolynomialRingZq::lossy_decompress(v, self.d_v, &self.q);
 
         // 6 𝑤 ← 𝑣′ − NTT^−1(𝐬^⊺ ∘ NTT(𝐮′))
         let w = v - sk.dot_product(&u).unwrap();
@@ -285,7 +285,7 @@ mod test_kpke {
             for message in messages {
                 let (pk, sk) = k_pke.gen();
                 let c = k_pke.enc(&pk, message);
-                let m = k_pke.dec(&sk, c);
+                let m = k_pke.dec(&sk, &c);
 
                 assert_eq!(message, m);
             }
