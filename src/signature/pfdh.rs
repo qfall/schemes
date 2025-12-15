@@ -31,7 +31,7 @@
 //!
 //! let m = "Hello World!";
 //!
-//! let (pk, sk) = pfdh.gen();
+//! let (pk, sk) = pfdh.key_gen();
 //! let sigma = pfdh.sign(m.to_owned(), &sk, &pk);
 //!
 //! assert!(pfdh.vfy(m.to_owned(), &sigma, &pk));

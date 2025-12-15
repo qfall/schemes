@@ -56,7 +56,7 @@ use qfall_math::integer::Z;
 let k_pke = KPKE::ml_kem_512();
 
 // generate (pk, sk) pair
-let (pk, sk) = k_pke.gen();
+let (pk, sk) = k_pke.key_gen();
 
 // encrypt a message
 let msg = Z::from_uft8("Hello");
@@ -76,11 +76,16 @@ let mut pfdh = PFDHGPV::setup(4, 113, 17, 128);
 
 let msg = "Hello World!";
 
-let (pk, sk) = pfdh.gen();
+let (pk, sk) = pfdh.key_gen();
 let sigma = pfdh.sign(msg.clone(), &sk, &pk);
 
 assert!(pfdh.vfy(msg.clone(), &sigma, &pk));
 ```
+
+## SemVer and Backward Compatibility
+As initial implementations of traits and prototypes can sometimes be optimized by changing the API, we give no API/interface stability guarantees for this crate.
+We try to be mindful but we may reorganize code without warning in advance.
+Therefore, it is recommended to fix the used version `version = "=x.y.z"` in your `Cargo.toml`.
 
 ## Bugs
 Please report bugs through the [GitHub issue tracker](https://github.com/qfall/schemes/issues).

@@ -29,7 +29,7 @@
 //!
 //! let m = "Hello World!";
 //!
-//! let (pk, sk) = fdh.gen();
+//! let (pk, sk) = fdh.key_gen();
 //! let sigma = fdh.sign(m.to_owned(), &sk, &pk);
 //!
 //! assert!(fdh.vfy(m.to_owned(), &sigma, &pk));

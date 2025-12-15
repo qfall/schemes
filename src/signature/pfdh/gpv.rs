@@ -10,7 +10,7 @@
 //! according to [\[1\]](<../index.html#:~:text=[1]>).
 
 use crate::{
-    hash::{sha256::HashMatZq, HashInto},
+    hash::{HashInto, sha256::HashMatZq},
     signature::SignatureScheme,
 };
 use qfall_math::{
@@ -45,7 +45,7 @@ use qfall_tools::{
 ///
 /// let m = "Hello World!";
 ///
-/// let (pk, sk) = pfdh.gen();
+/// let (pk, sk) = pfdh.key_gen();
 /// let sigma = pfdh.sign(m.to_owned(), &sk, &pk);
 ///
 /// assert!(pfdh.vfy(m.to_owned(), &sigma, &pk));
@@ -115,7 +115,7 @@ impl SignatureScheme for PFDHGPV {
     type Signature = (MatZ, Z);
 
     /// Generates a trapdoor by calling the `trap_gen` of the psf
-    fn gen(&mut self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&mut self) -> (Self::PublicKey, Self::SecretKey) {
         self.psf.trap_gen()
     }
 
@@ -146,7 +146,7 @@ impl SignatureScheme for PFDHGPV {
 
 #[cfg(test)]
 mod test_pfdh {
-    use crate::signature::{pfdh::gpv::PFDHGPV, SignatureScheme};
+    use crate::signature::{SignatureScheme, pfdh::gpv::PFDHGPV};
     use qfall_math::{integer::Z, rational::Q, traits::Pow};
 
     /// Ensure that the generated signature is valid.
@@ -160,7 +160,7 @@ mod test_pfdh {
         let q = Z::from(2).pow(&k).unwrap();
 
         let mut pfdh = PFDHGPV::setup(n, &q, &s, 128);
-        let (pk, sk) = pfdh.gen();
+        let (pk, sk) = pfdh.key_gen();
 
         for i in 0..10 {
             let m = format!("Hello World! {i}");

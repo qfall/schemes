@@ -34,7 +34,7 @@ use serde::{Deserialize, Serialize};
 /// use qfall_math::integer::Z;
 /// // setup public parameters and key pair
 /// let lpr = LPR::default();
-/// let (pk, sk) = lpr.gen();
+/// let (pk, sk) = lpr.key_gen();
 ///
 /// // encrypt a bit
 /// let msg = Z::ZERO; // must be a bit, i.e. msg = 0 or 1
@@ -240,7 +240,7 @@ impl LPR {
         // α = o (1 / sqrt(n) * log^3 n ))
         if self.alpha > 1 / (factor * self.n.sqrt() * self.n.log(2).unwrap().pow(3).unwrap()) {
             return Err(MathError::InvalidIntegerInput(String::from(
-                "Correctness is not guaranteed as α >= 1 / (sqrt(n) * log^3 n), but α < 1 / (sqrt(n) * log^3 n) is required. Please check the documentation!"
+                "Correctness is not guaranteed as α >= 1 / (sqrt(n) * log^3 n), but α < 1 / (sqrt(n) * log^3 n) is required. Please check the documentation!",
             )));
         }
 
@@ -325,9 +325,9 @@ impl PKEncryptionScheme for LPR {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, LPR};
     /// let lpr = LPR::default();
     ///
-    /// let (pk, sk) = lpr.gen();
+    /// let (pk, sk) = lpr.key_gen();
     /// ```
-    fn gen(&self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&self) -> (Self::PublicKey, Self::SecretKey) {
         // A <- Z_q^{n x n}
         let mat_a = MatZq::sample_uniform(&self.n, &self.n, &self.q);
         // s <- χ^n
@@ -367,7 +367,7 @@ impl PKEncryptionScheme for LPR {
     /// ```
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, LPR};
     /// let lpr = LPR::default();
-    /// let (pk, sk) = lpr.gen();
+    /// let (pk, sk) = lpr.key_gen();
     ///
     /// let cipher = lpr.enc(&pk, 1);
     /// ```
@@ -417,7 +417,7 @@ impl PKEncryptionScheme for LPR {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, LPR};
     /// use qfall_math::integer::Z;
     /// let lpr = LPR::default();
-    /// let (pk, sk) = lpr.gen();
+    /// let (pk, sk) = lpr.key_gen();
     /// let cipher = lpr.enc(&pk, 1);
     ///
     /// let m = lpr.dec(&sk, &cipher);
@@ -524,56 +524,56 @@ mod test_lpr {
     use crate::pk_encryption::PKEncryptionScheme;
     use qfall_math::integer::Z;
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 0 and small n.
     #[test]
     fn cycle_zero_small_n() {
         let msg = Z::ZERO;
         let lpr = LPR::default();
 
-        let (pk, sk) = lpr.gen();
+        let (pk, sk) = lpr.key_gen();
         let cipher = lpr.enc(&pk, &msg);
         let m = lpr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 1 and small n.
     #[test]
     fn cycle_one_small_n() {
         let msg = Z::ONE;
         let lpr = LPR::default();
 
-        let (pk, sk) = lpr.gen();
+        let (pk, sk) = lpr.key_gen();
         let cipher = lpr.enc(&pk, &msg);
         let m = lpr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 0 and larger n.
     #[test]
     fn cycle_zero_large_n() {
         let msg = Z::ZERO;
         let lpr = LPR::new_from_n(50);
 
-        let (pk, sk) = lpr.gen();
+        let (pk, sk) = lpr.key_gen();
         let cipher = lpr.enc(&pk, &msg);
         let m = lpr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 1 and larger n.
     #[test]
     fn cycle_one_large_n() {
         let msg = Z::ONE;
         let lpr = LPR::new_from_n(50);
 
-        let (pk, sk) = lpr.gen();
+        let (pk, sk) = lpr.key_gen();
         let cipher = lpr.enc(&pk, &msg);
         let m = lpr.dec(&sk, &cipher);
 
@@ -585,7 +585,7 @@ mod test_lpr {
     fn modulus_application() {
         let messages = [2, 3, i64::MAX, i64::MIN];
         let dr = LPR::default();
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
 
         for msg in messages {
             let msg_mod = Z::from(msg.rem_euclid(2));
@@ -600,7 +600,7 @@ mod test_lpr {
 
 #[cfg(test)]
 mod test_multi_bits {
-    use super::{GenericMultiBitEncryption, PKEncryptionScheme, LPR};
+    use super::{GenericMultiBitEncryption, LPR, PKEncryptionScheme};
     use qfall_math::integer::Z;
 
     /// Checks whether the multi-bit encryption cycle works properly
@@ -613,7 +613,7 @@ mod test_multi_bits {
             let msg = Z::from(value);
             let scheme = LPR::default();
 
-            let (pk, sk) = scheme.gen();
+            let (pk, sk) = scheme.key_gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
             let m = scheme.dec_multiple_bits(&sk, &cipher);
 
@@ -628,7 +628,7 @@ mod test_multi_bits {
         let msg = Z::ZERO;
         let scheme = LPR::default();
 
-        let (pk, sk) = scheme.gen();
+        let (pk, sk) = scheme.key_gen();
         let cipher = scheme.enc_multiple_bits(&pk, &msg);
         let m = scheme.dec_multiple_bits(&sk, &cipher);
 
@@ -646,7 +646,7 @@ mod test_multi_bits {
             let msg = Z::from(value);
             let scheme = LPR::default();
 
-            let (pk, sk) = scheme.gen();
+            let (pk, sk) = scheme.key_gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
             let m = scheme.dec_multiple_bits(&sk, &cipher);
 

@@ -66,7 +66,7 @@ pub trait PKEncryptionScheme {
     /// Generates a public key pair `(pk, sk)` suitable for the specific scheme.
     ///
     /// Returns a tuple `(pk, sk)` consisting of [`Self::PublicKey`] and [`Self::SecretKey`].
-    fn gen(&self) -> (Self::PublicKey, Self::SecretKey);
+    fn key_gen(&self) -> (Self::PublicKey, Self::SecretKey);
 
     /// Encrypts the provided `message` using the public key `pk`.
     ///
@@ -97,7 +97,7 @@ pub trait PKEncryptionSchemeMut {
     /// Generates a public key pair `(pk, sk)` suitable for the specific scheme.
     ///
     /// Returns a tuple `(pk, sk)` consisting of [`Self::PublicKey`] and [`Self::SecretKey`].
-    fn gen(&mut self) -> (Self::PublicKey, Self::SecretKey);
+    fn key_gen(&mut self) -> (Self::PublicKey, Self::SecretKey);
 
     /// Encrypts the provided `message` using the public key `pk`.
     ///

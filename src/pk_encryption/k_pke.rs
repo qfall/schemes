@@ -47,7 +47,7 @@ use serde::{Deserialize, Serialize};
 /// let k_pke = KPKE::ml_kem_512();
 ///
 /// // generate (pk, sk) pair
-/// let (pk, sk) = k_pke.gen();
+/// let (pk, sk) = k_pke.key_gen();
 ///
 /// // encrypt a message
 /// let msg = 250;
@@ -62,7 +62,7 @@ use serde::{Deserialize, Serialize};
 pub struct KPKE {
     q: ModulusPolynomialRingZq, // modulus (X^n + 1) mod p
     k: i64,                     // defines both dimensions of matrix A
-    eta_1: i64, // defines the binomial distribution of the secret and error drawn in `gen`
+    eta_1: i64, // defines the binomial distribution of the secret and error drawn in `key_gen`
     eta_2: i64, // defines the binomial distribution of the error drawn in `enc`
     d_u: i64,   // defines the number of kept upper-order bits per entry of vector `u`
     d_v: i64,   // defines the number of kept upper-order bits per entry of `v`
@@ -127,9 +127,9 @@ impl PKEncryptionScheme for KPKE {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, KPKE};
     /// let k_pke = KPKE::ml_kem_512();
     ///
-    /// let (pk, sk) = k_pke.gen();
+    /// let (pk, sk) = k_pke.key_gen();
     /// ```
-    fn gen(&self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&self) -> (Self::PublicKey, Self::SecretKey) {
         // 5 𝐀[𝑖,𝑗] ← SampleNTT(𝜌‖𝑗‖𝑖)
         // Reminder: NTT-representation, sampling and multiplication are not part of this prototype
         let mat_a = MatPolynomialRingZq::sample_uniform(self.k, self.k, &self.q);
@@ -182,7 +182,7 @@ impl PKEncryptionScheme for KPKE {
     /// ```
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, KPKE};
     /// let k_pke = KPKE::ml_kem_512();
-    /// let (pk, sk) = k_pke.gen();
+    /// let (pk, sk) = k_pke.key_gen();
     ///
     /// let c = k_pke.enc(&pk, 1);
     /// ```
@@ -249,7 +249,7 @@ impl PKEncryptionScheme for KPKE {
     /// ```
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, KPKE};
     /// let k_pke = KPKE::ml_kem_512();
-    /// let (pk, sk) = k_pke.gen();
+    /// let (pk, sk) = k_pke.key_gen();
     /// let c = k_pke.enc(&pk, 1);
     ///
     /// let m = k_pke.dec(&sk, &c);
@@ -272,7 +272,7 @@ impl PKEncryptionScheme for KPKE {
 
 #[cfg(test)]
 mod test_kpke {
-    use crate::pk_encryption::{k_pke::KPKE, PKEncryptionScheme};
+    use crate::pk_encryption::{PKEncryptionScheme, k_pke::KPKE};
 
     /// Ensures that [`KPKE`] works for all ML-KEM specifications by
     /// performing a round trip of several messages.
@@ -283,7 +283,7 @@ mod test_kpke {
             let messages = [0, 1, 13, 255, 2047, 4294967295_u32];
 
             for message in messages {
-                let (pk, sk) = k_pke.gen();
+                let (pk, sk) = k_pke.key_gen();
                 let c = k_pke.enc(&pk, message);
                 let m = k_pke.dec(&sk, &c);
 

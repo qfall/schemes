@@ -21,7 +21,7 @@ pub mod pfdh;
 /// This trait should be implemented by every signature scheme.
 /// It captures the essential functionalities each signature scheme has to support.
 ///
-/// Note: The gen does not take in the parameter `1^n`, as this is a public parameter,
+/// Note: [`SignatureScheme::key_gen`] does not take in the parameter `1^n`, as this is a public parameter,
 /// which shall be defined by the struct implementing this trait.
 pub trait SignatureScheme {
     /// The type of the secret key.
@@ -35,7 +35,7 @@ pub trait SignatureScheme {
     /// struct has, which implements this trait.
     ///
     /// Returns the public key and the secret key.
-    fn gen(&mut self) -> (Self::PublicKey, Self::SecretKey);
+    fn key_gen(&mut self) -> (Self::PublicKey, Self::SecretKey);
 
     /// Signs a message using the secret key (and potentially the public key).
     ///

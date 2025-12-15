@@ -260,7 +260,7 @@ impl HashInto<MatPolynomialRingZq> for HashMatPolynomialRingZq {
 
 #[cfg(test)]
 mod tests_sha {
-    use super::{hash_to_mat_zq_sha256, hash_to_zq_sha256, sha256, Z};
+    use super::{Z, hash_to_mat_zq_sha256, hash_to_zq_sha256, sha256};
     use qfall_math::{
         integer_mod_q::{MatZq, Zq},
         traits::{Distance, Pow},

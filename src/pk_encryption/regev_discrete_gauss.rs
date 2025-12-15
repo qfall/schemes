@@ -38,7 +38,7 @@ use serde::{Deserialize, Serialize};
 /// use qfall_math::integer::Z;
 /// // setup public parameters and key pair
 /// let regev = RegevWithDiscreteGaussianRegularity::default();
-/// let (pk, sk) = regev.gen();
+/// let (pk, sk) = regev.key_gen();
 ///
 /// // encrypt a bit
 /// let msg = Z::ZERO; // must be a bit, i.e. msg = 0 or 1
@@ -306,7 +306,7 @@ impl RegevWithDiscreteGaussianRegularity {
         // r >= ω( sqrt( log m ) )
         if self.r < self.m.log(2).unwrap().sqrt() {
             return Err(MathError::InvalidIntegerInput(String::from(
-                "Security is not guaranteed as r < sqrt( log m ) and r >= ω(sqrt(log m)) is required."
+                "Security is not guaranteed as r < sqrt( log m ) and r >= ω(sqrt(log m)) is required.",
             )));
         }
 
@@ -356,9 +356,9 @@ impl PKEncryptionScheme for RegevWithDiscreteGaussianRegularity {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, RegevWithDiscreteGaussianRegularity};
     /// let regev = RegevWithDiscreteGaussianRegularity::default();
     ///
-    /// let (pk, sk) = regev.gen();
+    /// let (pk, sk) = regev.key_gen();
     /// ```
-    fn gen(&self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&self) -> (Self::PublicKey, Self::SecretKey) {
         // s <- Z_q^n
         let vec_s = MatZq::sample_uniform(&self.n, 1, &self.q);
 
@@ -392,7 +392,7 @@ impl PKEncryptionScheme for RegevWithDiscreteGaussianRegularity {
     /// ```
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, RegevWithDiscreteGaussianRegularity};
     /// let regev = RegevWithDiscreteGaussianRegularity::default();
-    /// let (pk, sk) = regev.gen();
+    /// let (pk, sk) = regev.key_gen();
     ///
     /// let cipher = regev.enc(&pk, 1);
     /// ```
@@ -427,7 +427,7 @@ impl PKEncryptionScheme for RegevWithDiscreteGaussianRegularity {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, RegevWithDiscreteGaussianRegularity};
     /// use qfall_math::integer::Z;
     /// let regev = RegevWithDiscreteGaussianRegularity::default();
-    /// let (pk, sk) = regev.gen();
+    /// let (pk, sk) = regev.key_gen();
     /// let cipher = regev.enc(&pk, 1);
     ///
     /// let m = regev.dec(&sk, &cipher);
@@ -534,56 +534,56 @@ mod test_regev {
     use crate::pk_encryption::PKEncryptionScheme;
     use qfall_math::integer::Z;
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 0 and small n.
     #[test]
     fn cycle_zero_small_n() {
         let msg = Z::ZERO;
         let dr = RegevWithDiscreteGaussianRegularity::default();
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 1 and small n.
     #[test]
     fn cycle_one_small_n() {
         let msg = Z::ONE;
         let dr = RegevWithDiscreteGaussianRegularity::default();
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 0 and larger n.
     #[test]
     fn cycle_zero_large_n() {
         let msg = Z::ZERO;
         let dr = RegevWithDiscreteGaussianRegularity::new_from_n(30);
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 1 and larger n.
     #[test]
     fn cycle_one_large_n() {
         let msg = Z::ONE;
         let dr = RegevWithDiscreteGaussianRegularity::new_from_n(30);
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
 
@@ -595,7 +595,7 @@ mod test_regev {
     fn modulus_application() {
         let messages = [2, 3, i64::MAX, i64::MIN];
         let regev = RegevWithDiscreteGaussianRegularity::default();
-        let (pk, sk) = regev.gen();
+        let (pk, sk) = regev.key_gen();
 
         for msg in messages {
             let msg_mod = Z::from(msg.rem_euclid(2));
@@ -625,7 +625,7 @@ mod test_multi_bits {
             let msg = Z::from(value);
             let scheme = RegevWithDiscreteGaussianRegularity::default();
 
-            let (pk, sk) = scheme.gen();
+            let (pk, sk) = scheme.key_gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
             let m = scheme.dec_multiple_bits(&sk, &cipher);
 
@@ -640,7 +640,7 @@ mod test_multi_bits {
         let msg = Z::ZERO;
         let scheme = RegevWithDiscreteGaussianRegularity::default();
 
-        let (pk, sk) = scheme.gen();
+        let (pk, sk) = scheme.key_gen();
         let cipher = scheme.enc_multiple_bits(&pk, &msg);
         let m = scheme.dec_multiple_bits(&sk, &cipher);
 
@@ -658,7 +658,7 @@ mod test_multi_bits {
             let msg = Z::from(value);
             let scheme = RegevWithDiscreteGaussianRegularity::default();
 
-            let (pk, sk) = scheme.gen();
+            let (pk, sk) = scheme.key_gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
             let m = scheme.dec_multiple_bits(&sk, &cipher);
 
