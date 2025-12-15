@@ -18,9 +18,7 @@ use qfall_math::{
     traits::Pow,
 };
 use qfall_tools::utils::{
-    common_encodings::{
-        decode_z_bitwise_from_polynomialringzq, encode_z_bitwise_in_polynomialringzq,
-    },
+    common_encodings::{decode_value_from_polynomialringzq, encode_value_in_polynomialringzq},
     common_moduli::new_anticyclic,
 };
 use serde::{Deserialize, Serialize};
@@ -396,7 +394,7 @@ impl PKEncryptionScheme for RingLPR {
         let message: Z = message.into().abs();
         let mu = message % Z::from(2).pow(&self.n).unwrap();
         // set mu_q_half to polynomial with n {0,1} coefficients
-        let mu_q_half = encode_z_bitwise_in_polynomialringzq(&self.q, &mu);
+        let mu_q_half = encode_value_in_polynomialringzq(mu, 2, &self.q).unwrap();
 
         // r <- χ
         let r = PolynomialRingZq::sample_discrete_gauss(&self.q, 0, &self.alpha * &self.q.get_q())
@@ -447,7 +445,7 @@ impl PKEncryptionScheme for RingLPR {
         // res = v - s * u
         let result = &cipher.1 - sk * &cipher.0;
 
-        decode_z_bitwise_from_polynomialringzq(self.q.get_q(), &result)
+        decode_value_from_polynomialringzq(&result, 2).unwrap()
     }
 }
 

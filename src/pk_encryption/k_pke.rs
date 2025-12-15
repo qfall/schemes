@@ -17,12 +17,12 @@ use qfall_math::{
     integer::{MatPolyOverZ, PolyOverZ, Z},
     integer_mod_q::{MatPolynomialRingZq, ModulusPolynomialRingZq, PolynomialRingZq},
 };
-use qfall_tools::utils::{
-    common_encodings::{
-        decode_z_bitwise_from_polynomialringzq, encode_z_bitwise_in_polynomialringzq,
+use qfall_tools::{
+    compression::LossyCompressionFIPS203,
+    utils::{
+        common_encodings::{decode_value_from_polynomialringzq, encode_value_in_polynomialringzq},
+        common_moduli::new_anticyclic,
     },
-    common_moduli::new_anticyclic,
-    lossy_compression::LossyCompressionFIPS203,
 };
 use serde::{Deserialize, Serialize};
 
@@ -220,7 +220,7 @@ impl PKEncryptionScheme for KPKE {
         let vec_u = &pk.0 * &vec_y + vec_e_1;
 
         // 20 𝜇 ← Decompress_1(ByteDecode_1(𝑚))
-        let mu = encode_z_bitwise_in_polynomialringzq(&self.q, &message.into());
+        let mu = encode_value_in_polynomialringzq(message, 2, &self.q).unwrap();
 
         // 21 𝑣 ← NTT^−1(𝐭^⊺ ∘ 𝐲) + 𝑒_2 + 𝜇
         let v = pk.1.dot_product(&vec_y).unwrap() + e_2 + mu;
@@ -266,7 +266,7 @@ impl PKEncryptionScheme for KPKE {
         let w = v - sk.dot_product(&u).unwrap();
 
         // 7 𝑚 ← ByteEncode_1(Compress_1(𝑤))
-        decode_z_bitwise_from_polynomialringzq(self.q.get_q(), &w)
+        decode_value_from_polynomialringzq(&w, 2).unwrap()
     }
 }
 
