@@ -6,12 +6,9 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module provides the trait a struct should implement if it is an
-//! instance of a identity based public key encryption scheme. Furthermore,
-//! it contains cryptographic schemes implementing the [`IBEScheme`] trait.
+//! Contains traits and implementations related to Identity-Based Encryption (IBE) schemes.
 //!
-//! The main references are listed in the following
-//! and will be further referenced in submodules by these numbers:
+//! References:
 //! - \[1\] Gentry, Craig and Peikert, Chris and Vaikuntanathan, Vinod (2008).
 //!   Trapdoors for hard lattices and new cryptographic constructions.
 //!   In: Proceedings of the fortieth annual ACM symposium on Theory of computing.

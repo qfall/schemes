@@ -6,12 +6,9 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module provides the trait a struct should implement if it is an
-//! instance of a public key encryption scheme. Furthermore, it contains
-//! cryptographic schemes implementing the [`PKEncryptionScheme`] or [`PKEncryptionSchemeMut`] trait.
+//! Contains traits and implementations related to Public-Key Encryption (PKE) schemes.
 //!
-//! The main references are listed in the following
-//! and will be further referenced in submodules by these numbers:
+//! References:
 //! - \[1\] Peikert, Chris (2016).
 //!   A decade of lattice cryptography.
 //!   In: Theoretical Computer Science 10.4.

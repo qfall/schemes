@@ -6,9 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This Module contains a implementations of the full domain hash signature scheme,
-//! which only has to be instantiated with a corresponding PSF, a storage and
-//! a corresponding hash function.
+//! Contains implementations of the (stateful) full domain hash signature scheme.
 //!
 //! The constructions follow the general definition of a hash-then-sign signature scheme
 //! that uses a hash function as in [\[1\]](<../index.html#:~:text=[1]>) and a PSF.

@@ -6,8 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains a naive implementation of the K-PKE scheme
-//! used as foundation for ML-KEM.
+//! Contains a naive implementation of the K-PKE scheme used as foundation for ML-KEM and Kyber.
 //!
 //! **WARNING:** This implementation is a toy implementation of the basics below
 //! ML-KEM and mostly supposed to showcase the prototyping capabilities of the `qFALL`-library.

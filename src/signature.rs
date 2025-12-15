@@ -6,10 +6,9 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module provides the trait a struct should implement if it is an
-//! instance of a signature scheme. Furthermore, it contains cryptographic signatures
-//! implementing the [`SignatureScheme`] trait.
+//! Contains traits and implementations related to signature schemes.
 //!
+//! References:
 //! - \[1\] Gentry, Craig, Chris Peikert, and Vinod Vaikuntanathan.
 //!   "Trapdoors for hard lattices and new cryptographic constructions."
 //!   Proceedings of the fortieth annual ACM symposium on Theory of computing. 2008.

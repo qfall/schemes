@@ -7,7 +7,7 @@
 [<img alt="license" src="https://img.shields.io/badge/License-MPL_2.0-blue.svg?style=for-the-badge" height="20">](https://github.com/qfall/schemes/blob/dev/LICENSE)
 
 `qFALL` is a prototyping library for lattice-based cryptography.
-This `schemes`-crate collects implementations of lattice-based constructions to reuse them more easily in more complex constructions or protocols.
+This `schemes`-crate collects implementations of lattice-based constructions s.t. the community can reuse them in more complex constructions or protocols.
 
 ## Quick-Start
 First, ensure that you use a Unix-like distribution (Linux or MacOS). Setup [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you're using Windows. This is required due to this crate's dependency on FLINT.
@@ -59,7 +59,7 @@ let k_pke = KPKE::ml_kem_512();
 let (pk, sk) = k_pke.key_gen();
 
 // encrypt a message
-let msg = Z::from_uft8("Hello");
+let msg = Z::from_utf8("Hello");
 let cipher = k_pke.enc(&pk, &msg);
 
 // decrypt the ciphertext

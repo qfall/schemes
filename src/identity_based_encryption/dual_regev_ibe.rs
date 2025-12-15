@@ -6,9 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains an implementation of the IND-CPA secure
-//! identity based public key encryption scheme. The encryption scheme is based
-//! on [`DualRegevIBE`].
+//! Contains an implementation of the IND-CPA secure IBE scheme based on [`DualRegevIBE`].
 
 use super::IBEScheme;
 use crate::{

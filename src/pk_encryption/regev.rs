@@ -6,8 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains an implementation of the IND-CPA secure
-//! public key Regev encryption scheme.
+//! Contains an implementation of the IND-CPA PKE refered to as Regev encryption.
 
 use super::{GenericMultiBitEncryption, PKEncryptionScheme};
 use qfall_math::{

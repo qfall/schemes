@@ -6,8 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains an implementation of the collision-resistant
-//! SIS-based hash function.
+//! Contains an implementation of the collision-resistant SIS hash function.
 
 use qfall_math::{error::MathError, integer::Z, integer_mod_q::MatZq, traits::MatrixDimensions};
 use serde::{Deserialize, Serialize};

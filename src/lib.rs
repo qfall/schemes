@@ -6,28 +6,40 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! # What is qFALL-schemes?
-//! qFall-schemes provides lattice-based cryptographic constructions to enable prototyping
-//! based on the existing constructions.
+//! `qFALL` is a prototyping library for lattice-based cryptography.
+//! `qFALL-schemes` collects prototype implementations of lattice-based cryptography
+//! s.t. the community can reuse them in more complex constructions or protocols.
+//! Among these are traits and implemented constructions of:
+//! - [Public-Key Encryption schemes](pk_encryption) implementations such as [Regev's Encryption](pk_encryption::Regev), [its dual version](pk_encryption::DualRegev), [LPR](pk_encryption::LPR), or [K-PKE](pk_encryption::KPKE),
+//! - [Signature schemes](signature) implementations such as GPV-based [FDH](signature::fdh) or [PFDH](signature::fdh),
+//! - an [Identity-based Encryption](identity_based_encryption) from [Dual Regev](identity_based_encryption::DualRegevIBE), as well as
+//! - [Hash functions](hash) such as the [SIS hash](hash::SISHash) or a [SHA256-based hash](hash::sha256).
 //!
-//! Currently qFALL-schemes supports 3 main construction types:
-//! - [Identity-Based Encryptions](identity_based_encryption::IBEScheme)
-//! - [Public-Key Encryptions](pk_encryption::PKEncryptionScheme)
-//! - [Signatures](signature::SignatureScheme)
+//! The `qFALL` project contains two more crates called [`qFALL-math`](https://crates.io/crates/qfall-math)
+//! and [`qFALL-tools`](https://crates.io/crates/qfall-tools) to support prototyping.
+//! - Find further information on [our website](https://qfall.github.io/).
+//! - We recommend [our tutorial](https://qfall.github.io/book) to start working with qFALL.
 //!
-//! These are identified by traits and then implemented for specific constructions, e.g.
-//! [`RingLPR`](pk_encryption::RingLPR).
+//! ## Quick Example
+//! ```
+//! use qfall_schemes::pk_encryption::{KPKE, PKEncryptionScheme};
+//! use qfall_math::integer::Z;
 //!
-//! qfall-schemes is free software: you can redistribute it and/or modify it under
-//! the terms of the Mozilla Public License Version 2.0 as published by the
-//! Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
+//! // setup public parameters
+//! let k_pke = KPKE::ml_kem_512();
 //!
-//! ## Tutorial + Website
-//! You can find a dedicated [tutorial](https://qfall.github.io/book/index.html) to qFALL-schemes on our [website](https://qfall.github.io/).
-//! The tutorial explains the basic steps starting from installation and
-//! continues with basic usage.
-//! qfall-schemes is co-developed together with qFALL-math and qFALL-tools which provide the
-//! foundation that is used to implement the cryptographic constructions.
+//! // generate (pk, sk) pair
+//! let (pk, sk) = k_pke.key_gen();
+//!
+//! // encrypt a message
+//! let msg = Z::from_utf8("Hello");
+//! let cipher = k_pke.enc(&pk, &msg);
+//!
+//! // decrypt the ciphertext
+//! let m = k_pke.dec(&sk, &cipher);
+//!
+//! assert_eq!(msg, m);
+//! ```
 
 pub mod hash;
 pub mod identity_based_encryption;

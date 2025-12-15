@@ -6,8 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains a general implementation of an IND-CCA secure
-//! public key encryption scheme constructed
+//! Contains a generic implementation of an IND-CCA secure PKE scheme constructed
 //! via an [`IBEScheme`] and a [`SignatureScheme`].
 
 use super::PKEncryptionSchemeMut;

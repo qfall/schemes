@@ -6,9 +6,9 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains implementations of hash functions.
+//! Contains traits and implementations related to hash functions.
 //!
-//! The main references are listed in the following:
+//! References:
 //! - \[1\] Peikert, Chris (2016).
 //!   A decade of lattice cryptography.
 //!   In: Theoretical Computer Science 10.4.
