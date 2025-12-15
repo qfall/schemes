@@ -51,7 +51,13 @@ fn bench_kpke_dec_512(c: &mut Criterion) {
     let (pk, sk) = k_pke.gen();
     let cipher = k_pke.enc(&pk, i64::MAX);
 
-    c.bench_function("K-PKE dec 512", |b| b.iter(|| k_pke.dec(&sk, &cipher)));
+    c.bench_function("K-PKE dec 512", |b| {
+        b.iter_batched(
+            || cipher.clone(),
+            |cipher| k_pke.dec(&sk, &cipher),
+            criterion::BatchSize::SmallInput,
+        )
+    });
 }
 
 /// Benchmark [kpke_cycle] with [KPKE::ml_kem_768].
@@ -88,7 +94,13 @@ fn bench_kpke_dec_768(c: &mut Criterion) {
     let (pk, sk) = k_pke.gen();
     let cipher = k_pke.enc(&pk, i64::MAX);
 
-    c.bench_function("K-PKE dec 768", |b| b.iter(|| k_pke.dec(&sk, &cipher)));
+    c.bench_function("K-PKE dec 768", |b| {
+        b.iter_batched(
+            || cipher.clone(),
+            |cipher| k_pke.dec(&sk, &cipher),
+            criterion::BatchSize::SmallInput,
+        )
+    });
 }
 
 /// Benchmark [kpke_cycle] with [KPKE::ml_kem_1024].
@@ -125,7 +137,13 @@ fn bench_kpke_dec_1024(c: &mut Criterion) {
     let (pk, sk) = k_pke.gen();
     let cipher = k_pke.enc(&pk, i64::MAX);
 
-    c.bench_function("K-PKE dec 1024", |b| b.iter(|| k_pke.dec(&sk, &cipher)));
+    c.bench_function("K-PKE dec 1024", |b| {
+        b.iter_batched(
+            || cipher.clone(),
+            |cipher| k_pke.dec(&sk, &cipher),
+            criterion::BatchSize::SmallInput,
+        )
+    });
 }
 
 criterion_group!(

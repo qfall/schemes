@@ -10,18 +10,19 @@
 //! used as foundation for ML-KEM.
 //!
 //! **WARNING:** This implementation is a toy implementation of the basics below
-//! ML-KEM and mostly supposed to showcase the prototyping capabilities of the `qfall`-library.
+//! ML-KEM and mostly supposed to showcase the prototyping capabilities of the `qFALL`-library.
 
 use crate::pk_encryption::PKEncryptionScheme;
 use qfall_math::{
-    integer::Z,
+    integer::{MatPolyOverZ, PolyOverZ, Z},
     integer_mod_q::{MatPolynomialRingZq, ModulusPolynomialRingZq, PolynomialRingZq},
 };
-use qfall_tools::utils::{
-    common_encodings::{
-        decode_z_bitwise_from_polynomialringzq, encode_z_bitwise_in_polynomialringzq,
+use qfall_tools::{
+    compression::LossyCompressionFIPS203,
+    utils::{
+        common_encodings::{decode_value_from_polynomialringzq, encode_value_in_polynomialringzq},
+        common_moduli::new_anticyclic,
     },
-    common_moduli::new_anticyclic,
 };
 use serde::{Deserialize, Serialize};
 
@@ -29,9 +30,8 @@ use serde::{Deserialize, Serialize};
 /// as a basis for ML-KEM.
 ///
 /// This implementation is not supposed to be an implementation of the FIPS 203 standard in [\[6\]](<index.html#:~:text=[6]>), but
-/// is supposed to showcase the prototyping capabilities of `qfall` and does not cover compression algorithms
-/// as specified in the FIPS 203 document or might deviate for the choice of matrix multiplication algorithms.
-/// Especially, NTT-representation, sampling and multiplication are not part of this prototype.
+/// is supposed to showcase the prototyping capabilities of `qFALL` and does not cover byte decomposition algorithms
+/// as specified in the FIPS 203 document or NTT-multiplication.
 ///
 /// Attributes:
 /// - `q`: defines the modulus polynomial `(X^n + 1) mod p`
@@ -64,6 +64,8 @@ pub struct KPKE {
     k: i64,                     // defines both dimensions of matrix A
     eta_1: i64, // defines the binomial distribution of the secret and error drawn in `gen`
     eta_2: i64, // defines the binomial distribution of the error drawn in `enc`
+    d_u: i64,   // defines the number of kept upper-order bits per entry of vector `u`
+    d_v: i64,   // defines the number of kept upper-order bits per entry of `v`
 }
 
 impl KPKE {
@@ -75,6 +77,8 @@ impl KPKE {
             k: 2,
             eta_1: 3,
             eta_2: 2,
+            d_u: 10,
+            d_v: 4,
         }
     }
 
@@ -86,6 +90,8 @@ impl KPKE {
             k: 3,
             eta_1: 2,
             eta_2: 2,
+            d_u: 10,
+            d_v: 4,
         }
     }
 
@@ -97,6 +103,8 @@ impl KPKE {
             k: 4,
             eta_1: 2,
             eta_2: 2,
+            d_u: 11,
+            d_v: 5,
         }
     }
 }
@@ -104,7 +112,7 @@ impl KPKE {
 impl PKEncryptionScheme for KPKE {
     type PublicKey = (MatPolynomialRingZq, MatPolynomialRingZq);
     type SecretKey = MatPolynomialRingZq;
-    type Cipher = (MatPolynomialRingZq, PolynomialRingZq);
+    type Cipher = (MatPolyOverZ, PolyOverZ);
 
     /// Generates a `(pk, sk)` pair by following these steps:
     /// - A <- R_q^{k x k}
@@ -160,6 +168,7 @@ impl PKEncryptionScheme for KPKE {
     /// - e_2 <- Bin(eta_2, 0.5) centered around 0
     /// - u = A^T * y + e_1
     /// - v = t^T * y + e_2 + 𝜇, where 𝜇 is the {q/2, 0} encoding of the bits of `message`
+    /// - Compress u and v
     ///
     /// Then, ciphertext `(u, v)` is returned.
     ///
@@ -211,15 +220,21 @@ impl PKEncryptionScheme for KPKE {
         let vec_u = &pk.0 * &vec_y + vec_e_1;
 
         // 20 𝜇 ← Decompress_1(ByteDecode_1(𝑚))
-        let mu = encode_z_bitwise_in_polynomialringzq(&self.q, &message.into());
+        let mu = encode_value_in_polynomialringzq(message, 2, &self.q).unwrap();
 
         // 21 𝑣 ← NTT^−1(𝐭^⊺ ∘ 𝐲) + 𝑒_2 + 𝜇
         let v = pk.1.dot_product(&vec_y).unwrap() + e_2 + mu;
+
+        // 22: 𝑐_1 ← ByteEncode_{𝑑_𝑢}(Compress_{𝑑_𝑢}(𝐮))
+        let vec_u = vec_u.lossy_compress(self.d_u);
+        // 23: 𝑐_2 ← ByteEncode_{𝑑_𝑣}(Compress_{𝑑_𝑣}(𝑣))
+        let v = v.lossy_compress(self.d_v);
 
         (vec_u, v)
     }
 
     /// Decrypts the provided `cipher` using the secret key `sk` by following these steps:
+    /// - Decompress u and v
     /// - w = v - s^T * u
     /// - returns the decoding of `w` with 1 and 0 set in the returned [`Z`] instance
     ///   if the corresponding coefficient was closer to q/2 or 0 respectively
@@ -242,11 +257,16 @@ impl PKEncryptionScheme for KPKE {
     /// assert_eq!(1, m);
     /// ```
     fn dec(&self, sk: &Self::SecretKey, (u, v): &Self::Cipher) -> Z {
-        // 6 𝑤 ← 𝑣 − NTT^−1(𝐬^⊺ ∘ NTT(𝐮))
-        let w = v - sk.dot_product(u).unwrap();
+        // 3: 𝐮′ ← Decompress_{𝑑_𝑢}(ByteDecode_{𝑑_𝑢}(𝑐_1))
+        let u = MatPolynomialRingZq::lossy_decompress(u, self.d_u, &self.q);
+        // 4: 𝑣′ ← Decompress_{𝑑_𝑣}(ByteDecode_{𝑑_𝑣}(𝑐_2))
+        let v = PolynomialRingZq::lossy_decompress(v, self.d_v, &self.q);
+
+        // 6 𝑤 ← 𝑣′ − NTT^−1(𝐬^⊺ ∘ NTT(𝐮′))
+        let w = v - sk.dot_product(&u).unwrap();
 
         // 7 𝑚 ← ByteEncode_1(Compress_1(𝑤))
-        decode_z_bitwise_from_polynomialringzq(self.q.get_q(), &w)
+        decode_value_from_polynomialringzq(&w, 2).unwrap()
     }
 }
 
