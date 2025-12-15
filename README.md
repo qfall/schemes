@@ -28,7 +28,7 @@ cargo add qfall-schemes
 ## What does qFALL-schemes offer?
 qFALL-schemes collects prototype implementations of lattice-based constructions to reuse them more easily in more complex constructions or protocols.
 
-List of prototypes available
+List of prototypes
 - [Public Key Encryption](https://docs.rs/qfall-schemes/latest/qfall_schemes/pk_encryption/index.html)
   - [LWE Encryption](https://docs.rs/qfall-schemes/latest/qfall_schemes/pk_encryption/struct.Regev.html)
   - [Dual LWE Encryption](https://docs.rs/qfall-schemes/latest/qfall_schemes/pk_encryption/struct.DualRegev.html)
