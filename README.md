@@ -7,7 +7,7 @@
 [<img alt="license" src="https://img.shields.io/badge/License-MPL_2.0-blue.svg?style=for-the-badge" height="20">](https://github.com/qfall/schemes/blob/dev/LICENSE)
 
 `qFALL` is a prototyping library for lattice-based cryptography.
-This `schemes`-crate collects implementations of lattice-based constructions s.t. the community can reuse them in more complex constructions or protocols.
+This `schemes`-crate collects implementations of lattice-based constructions s.t. anyone can audit, modify, extend, or build on top of them to prototype more involved constructions or protocols.
 
 ## Quick-Start
 First, ensure that you use a Unix-like distribution (Linux or MacOS). Setup [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you're using Windows. This is required due to this crate's dependency on FLINT.
@@ -26,7 +26,7 @@ cargo add qfall-schemes
 - We recommend [our tutorial](https://qfall.github.io/book) to start working with qFALL.
 
 ## What does qFALL-schemes offer?
-qFALL-schemes collects prototype implementations of lattice-based constructions to reuse them more easily in more complex constructions or protocols.
+qFALL-schemes collects prototype implementations of lattice-based constructions to audit, modify, extend, and reuse them more easily in more involved constructions or protocols.
 
 List of prototypes
 - [Public Key Encryption](https://docs.rs/qfall-schemes/latest/qfall_schemes/pk_encryption/index.html)

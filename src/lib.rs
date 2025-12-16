@@ -8,7 +8,7 @@
 
 //! `qFALL` is a prototyping library for lattice-based cryptography.
 //! `qFALL-schemes` collects prototype implementations of lattice-based cryptography
-//! s.t. the community can reuse them in more complex constructions or protocols.
+//! s.t. anyone can audit, modify, extend, or build on top of them to prototype more involved constructions or protocols.
 //! Among these are traits and implemented constructions of:
 //! - [Public-Key Encryption schemes](pk_encryption) implementations such as [Regev's Encryption](pk_encryption::Regev), [its dual version](pk_encryption::DualRegev), [LPR](pk_encryption::LPR), or [K-PKE](pk_encryption::KPKE),
 //! - [Signature schemes](signature) implementations such as GPV-based [FDH](signature::fdh) or [PFDH](signature::fdh),
