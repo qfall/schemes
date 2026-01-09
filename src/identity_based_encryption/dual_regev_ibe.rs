@@ -6,9 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains an implementation of the IND-CPA secure
-//! identity based public key encryption scheme. The encryption scheme is based
-//! on [`DualRegevIBE`].
+//! Contains an implementation of the IND-CPA secure IBE scheme based on [`DualRegevIBE`].
 
 use super::IBEScheme;
 use crate::{
@@ -462,7 +460,7 @@ mod test_dual_regev_ibe {
         DualRegevIBE::new_from_n(1);
     }
 
-    /// Checks whether the full-cycle of gen, extract, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, extract, enc, dec works properly
     /// for message 0 and the default.
     #[test]
     fn cycle_zero_default() {
@@ -478,7 +476,7 @@ mod test_dual_regev_ibe {
         assert_eq!(msg, m)
     }
 
-    /// Checks whether the full-cycle of gen, extract, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, extract, enc, dec works properly
     /// for message 1 and the default.
     #[test]
     fn cycle_one_default() {
@@ -494,7 +492,7 @@ mod test_dual_regev_ibe {
         assert_eq!(msg, m)
     }
 
-    /// Checks whether the full-cycle of gen, extract, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, extract, enc, dec works properly
     /// for message 0 and small n.
     #[test]
     fn cycle_zero_small_n() {
@@ -509,7 +507,7 @@ mod test_dual_regev_ibe {
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, extract, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, extract, enc, dec works properly
     /// for message 1 and small n.
     #[test]
     fn cycle_one_small_n() {

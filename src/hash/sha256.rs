@@ -6,7 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains sha256 hashes into different domains.
+//! Contains sha256-based hashes that hash into different domains.
 
 use super::HashInto;
 use qfall_math::traits::FromCoefficientEmbedding;
@@ -260,7 +260,7 @@ impl HashInto<MatPolynomialRingZq> for HashMatPolynomialRingZq {
 
 #[cfg(test)]
 mod tests_sha {
-    use super::{hash_to_mat_zq_sha256, hash_to_zq_sha256, sha256, Z};
+    use super::{Z, hash_to_mat_zq_sha256, hash_to_zq_sha256, sha256};
     use qfall_math::{
         integer_mod_q::{MatZq, Zq},
         traits::{Distance, Pow},

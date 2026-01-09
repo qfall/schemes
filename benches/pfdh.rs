@@ -6,8 +6,8 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-use criterion::{criterion_group, Criterion};
-use qfall_schemes::signature::{pfdh::PFDHGPV, SignatureScheme};
+use criterion::{Criterion, criterion_group};
+use qfall_schemes::signature::{SignatureScheme, pfdh::PFDHGPV};
 
 /// Performs a full instantiation with an additional signing and verifying of a signature.
 fn pfdh_cycle(n: i64) {
@@ -15,7 +15,7 @@ fn pfdh_cycle(n: i64) {
 
     let m = "Hello World!";
 
-    let (pk, sk) = pfdh.gen();
+    let (pk, sk) = pfdh.key_gen();
     let sigma = pfdh.sign(m.to_owned(), &sk, &pk);
 
     pfdh.vfy(m.to_owned(), &sigma, &pk);
@@ -50,7 +50,7 @@ fn bench_pfdh_signature(c: &mut Criterion) {
 
     let m = "Hello World!";
 
-    let (pk, sk) = pfdh.gen();
+    let (pk, sk) = pfdh.key_gen();
 
     c.bench_function("Signing PFDH n=8", |b| {
         b.iter(|| pfdh.sign(m.to_owned(), &sk, &pk))

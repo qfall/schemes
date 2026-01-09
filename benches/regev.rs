@@ -11,12 +11,12 @@ use qfall_math::integer::Z;
 use qfall_schemes::pk_encryption::PKEncryptionScheme;
 use qfall_schemes::pk_encryption::Regev;
 
-/// Performs a full-cycle of gen, enc, dec with regev.
+/// Performs a full-cycle of key_gen, enc, dec with regev.
 fn regev_cycle(n: i64) {
     let msg = Z::ONE;
     let regev = Regev::new_from_n(n);
 
-    let (pk, sk) = regev.gen();
+    let (pk, sk) = regev.key_gen();
     let cipher = regev.enc(&pk, &msg);
     let _ = regev.dec(&sk, &cipher);
 }

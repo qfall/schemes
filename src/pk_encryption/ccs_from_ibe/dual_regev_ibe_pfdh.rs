@@ -99,27 +99,27 @@ mod test_ccs_from_ibe {
     use crate::pk_encryption::PKEncryptionSchemeMut;
     use qfall_math::integer::Z;
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 0 and small n.
     #[test]
     fn cycle_zero() {
         let msg = Z::ZERO;
         let mut scheme = CCSfromIBE::init_dr_pfdh_from_n(4);
 
-        let (pk, sk) = scheme.gen();
+        let (pk, sk) = scheme.key_gen();
         let cipher = scheme.enc(&pk, &msg);
         let m = scheme.dec(&sk, &cipher);
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 1 and small n.
     #[test]
     fn cycle_one() {
         let msg = Z::ONE;
         let mut scheme = CCSfromIBE::init_dr_pfdh_from_n(4);
 
-        let (pk, sk) = scheme.gen();
+        let (pk, sk) = scheme.key_gen();
         let cipher = scheme.enc(&pk, &msg);
         let m = scheme.dec(&sk, &cipher);
         assert_eq!(msg, m);

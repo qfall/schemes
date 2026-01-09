@@ -6,8 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains an implementation of the IND-CPA secure
-//! public key Ring-LPR encryption scheme.
+//! Contains an implementation of the IND-CPA PKE refered to as Ring-LPR encryption.
 
 use super::PKEncryptionScheme;
 use qfall_math::{
@@ -40,7 +39,7 @@ use serde::{Deserialize, Serialize};
 /// use qfall_math::integer::Z;
 /// // setup public parameters and key pair
 /// let lpr = RingLPR::default();
-/// let (pk, sk) = lpr.gen();
+/// let (pk, sk) = lpr.key_gen();
 ///
 /// // encrypt a bit
 /// let msg = Z::from(15); // must be at most n bits, i.e. for default 2^16 - 1
@@ -345,9 +344,9 @@ impl PKEncryptionScheme for RingLPR {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, RingLPR};
     /// let lpr = RingLPR::default();
     ///
-    /// let (pk, sk) = lpr.gen();
+    /// let (pk, sk) = lpr.key_gen();
     /// ```
-    fn gen(&self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&self) -> (Self::PublicKey, Self::SecretKey) {
         // a <- R_q
         let a = PolynomialRingZq::sample_uniform(&self.q);
         // s <- χ
@@ -385,7 +384,7 @@ impl PKEncryptionScheme for RingLPR {
     /// ```
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, RingLPR};
     /// let lpr = RingLPR::default();
-    /// let (pk, sk) = lpr.gen();
+    /// let (pk, sk) = lpr.key_gen();
     ///
     /// let cipher = lpr.enc(&pk, 15);
     /// ```
@@ -434,7 +433,7 @@ impl PKEncryptionScheme for RingLPR {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, RingLPR};
     /// use qfall_math::integer::Z;
     /// let lpr = RingLPR::default();
-    /// let (pk, sk) = lpr.gen();
+    /// let (pk, sk) = lpr.key_gen();
     /// let cipher = lpr.enc(&pk, 212);
     ///
     /// let m = lpr.dec(&sk, &cipher);
@@ -535,12 +534,12 @@ mod test_ring_lpr {
     use crate::pk_encryption::PKEncryptionScheme;
     use qfall_math::integer::Z;
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for several messages and small n.
     #[test]
     fn cycle_small_n() {
         let scheme = RingLPR::default();
-        let (pk, sk) = scheme.gen();
+        let (pk, sk) = scheme.key_gen();
         let messages = [0, 1, 2, 15, 70, 256, 580, 1000, 4000, 8000, 65535];
 
         for message in messages {
@@ -551,12 +550,12 @@ mod test_ring_lpr {
         }
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for several messages and larger n.
     #[test]
     fn cycle_large_n() {
         let scheme = RingLPR::new_from_n(64);
-        let (pk, sk) = scheme.gen();
+        let (pk, sk) = scheme.key_gen();
         let messages = [
             0,
             1,
@@ -588,7 +587,7 @@ mod test_ring_lpr {
     fn modulus_application() {
         let messages = [65536];
         let scheme = RingLPR::default();
-        let (pk, sk) = scheme.gen();
+        let (pk, sk) = scheme.key_gen();
 
         for msg in messages {
             let cipher = scheme.enc(&pk, msg);

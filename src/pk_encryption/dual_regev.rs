@@ -6,8 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains an implementation of the IND-CPA secure
-//! public key Dual Regev encryption scheme.
+//! Contains an implementation of the IND-CPA PKE scheme refered to as Dual Regev encryption.
 
 use super::{GenericMultiBitEncryption, PKEncryptionScheme};
 use qfall_math::{
@@ -35,7 +34,7 @@ use serde::{Deserialize, Serialize};
 /// use qfall_math::integer::Z;
 /// // setup public parameters and key pair
 /// let dual_regev = DualRegev::default();
-/// let (pk, sk) = dual_regev.gen();
+/// let (pk, sk) = dual_regev.key_gen();
 ///
 /// // encrypt a bit
 /// let msg = Z::ZERO; // must be a bit, i.e. msg = 0 or 1
@@ -122,7 +121,9 @@ impl DualRegev {
     pub fn new_from_n(n: impl Into<Z>) -> Self {
         let n = n.into();
         if n < 10 {
-            panic!("Choose n >= 10 as this function does not return parameters ensuring proper correctness of the scheme otherwise.");
+            panic!(
+                "Choose n >= 10 as this function does not return parameters ensuring proper correctness of the scheme otherwise."
+            );
         }
 
         let mut m: Z;
@@ -238,13 +239,13 @@ impl DualRegev {
         // α = o (1 / ( sqrt(n) * log n ) )
         if self.alpha > 1 / (self.n.sqrt() * self.n.log(2).unwrap()) {
             return Err(MathError::InvalidIntegerInput(String::from(
-                "Correctness is not guaranteed as α >= 1 / (sqrt(n) * log n), but α < 1 / (sqrt(n) * log n) is required."
+                "Correctness is not guaranteed as α >= 1 / (sqrt(n) * log n), but α < 1 / (sqrt(n) * log n) is required.",
             )));
         }
         // concentration bound with r=5 -> r * sqrt(m) * α > q/4
         if 20 * self.m.sqrt() * &self.alpha > q {
             return Err(MathError::InvalidIntegerInput(String::from(
-                "Correctness is not guaranteed as 5 * sqrt(m) * α > q/4, but 5 * sqrt(m) * α <= q/4 is required."
+                "Correctness is not guaranteed as 5 * sqrt(m) * α > q/4, but 5 * sqrt(m) * α <= q/4 is required.",
             )));
         }
 
@@ -334,9 +335,9 @@ impl PKEncryptionScheme for DualRegev {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, DualRegev};
     /// let dual_regev = DualRegev::default();
     ///
-    /// let (pk, sk) = dual_regev.gen();
+    /// let (pk, sk) = dual_regev.key_gen();
     /// ```
-    fn gen(&self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&self) -> (Self::PublicKey, Self::SecretKey) {
         // A <- Z_q^{n x m}
         let mat_a = MatZq::sample_uniform(&self.n, &self.m, &self.q);
         // x <- Z_2^m
@@ -370,7 +371,7 @@ impl PKEncryptionScheme for DualRegev {
     /// ```
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, DualRegev};
     /// let dual_regev = DualRegev::default();
-    /// let (pk, sk) = dual_regev.gen();
+    /// let (pk, sk) = dual_regev.key_gen();
     ///
     /// let cipher = dual_regev.enc(&pk, 1);
     /// ```
@@ -418,7 +419,7 @@ impl PKEncryptionScheme for DualRegev {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, DualRegev};
     /// use qfall_math::integer::Z;
     /// let dual_regev = DualRegev::default();
-    /// let (pk, sk) = dual_regev.gen();
+    /// let (pk, sk) = dual_regev.key_gen();
     /// let cipher = dual_regev.enc(&pk, 1);
     ///
     /// let m = dual_regev.dec(&sk, &cipher);
@@ -523,53 +524,53 @@ mod test_dual_regev {
     use crate::pk_encryption::PKEncryptionScheme;
     use qfall_math::integer::Z;
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 0 and small n.
     #[test]
     fn cycle_zero_small_n() {
         let msg = Z::ZERO;
         let dr = DualRegev::default();
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 1 and small n.
     #[test]
     fn cycle_one_small_n() {
         let msg = Z::ONE;
         let dr = DualRegev::default();
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 0 and larger n.
     #[test]
     fn cycle_zero_large_n() {
         let msg = Z::ZERO;
         let dr = DualRegev::new_from_n(50);
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 1 and larger n.
     #[test]
     fn cycle_one_large_n() {
         let msg = Z::ONE;
         let dr = DualRegev::new_from_n(50);
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
         assert_eq!(msg, m);
@@ -580,7 +581,7 @@ mod test_dual_regev {
     fn modulus_application() {
         let messages = [2, 3, i64::MAX, i64::MIN];
         let dr = DualRegev::default();
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
 
         for msg in messages {
             let msg_mod = Z::from(msg.rem_euclid(2));
@@ -608,7 +609,7 @@ mod test_multi_bits {
             let msg = Z::from(value);
             let scheme = DualRegev::default();
 
-            let (pk, sk) = scheme.gen();
+            let (pk, sk) = scheme.key_gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
             let m = scheme.dec_multiple_bits(&sk, &cipher);
 
@@ -623,7 +624,7 @@ mod test_multi_bits {
         let msg = Z::ZERO;
         let scheme = DualRegev::default();
 
-        let (pk, sk) = scheme.gen();
+        let (pk, sk) = scheme.key_gen();
         let cipher = scheme.enc_multiple_bits(&pk, &msg);
         let m = scheme.dec_multiple_bits(&sk, &cipher);
 
@@ -641,7 +642,7 @@ mod test_multi_bits {
             let msg = Z::from(value);
             let scheme = DualRegev::default();
 
-            let (pk, sk) = scheme.gen();
+            let (pk, sk) = scheme.key_gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
             let m = scheme.dec_multiple_bits(&sk, &cipher);
 

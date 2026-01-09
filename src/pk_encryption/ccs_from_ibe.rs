@@ -6,8 +6,7 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains a general implementation of an IND-CCA secure
-//! public key encryption scheme constructed
+//! Contains a generic implementation of an IND-CCA secure PKE scheme constructed
 //! via an [`IBEScheme`] and a [`SignatureScheme`].
 
 use super::PKEncryptionSchemeMut;
@@ -30,7 +29,7 @@ pub mod dual_regev_ibe_pfdh;
 /// use qfall_math::integer::Z;
 /// let mut scheme = CCSfromIBE::init_dr_pfdh_from_n(4);
 ///
-/// let (pk, sk) = scheme.gen();
+/// let (pk, sk) = scheme.key_gen();
 /// let cipher = scheme.enc(&pk, 0);
 /// let m = scheme.dec(&sk, &cipher);
 ///
@@ -68,15 +67,15 @@ where
     /// use qfall_schemes::pk_encryption::{CCSfromIBE, PKEncryptionSchemeMut};
     /// let mut scheme = CCSfromIBE::init_dr_pfdh_from_n(4);
     ///
-    /// let (pk, sk) = scheme.gen();
+    /// let (pk, sk) = scheme.key_gen();
     /// ```
-    fn gen(&mut self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&mut self) -> (Self::PublicKey, Self::SecretKey) {
         let (pk, sk) = self.ibe.setup();
         (pk.clone(), (pk, sk))
     }
 
     /// Generates an encryption of `message` for the provided public key by following these steps:
-    /// - (vrfy_key, sign_key) = signature.gen()
+    /// - (vrfy_key, sign_key) = signature.key_gen()
     /// - c = ibe.enc(mpk, vrfy_key, message), i.e. encrypt `message` with respect to identity `vrfy_key`
     /// - sigma = signature.sign(c, sign_key, vrfy_key), i.e. sign message `c`
     ///
@@ -93,11 +92,11 @@ where
     /// use qfall_schemes::pk_encryption::{CCSfromIBE, PKEncryptionSchemeMut};
     /// let mut scheme = CCSfromIBE::init_dr_pfdh_from_n(4);
     ///
-    /// let (pk, sk) = scheme.gen();
+    /// let (pk, sk) = scheme.key_gen();
     /// let cipher = scheme.enc(&pk, 1);
     /// ```
     fn enc(&mut self, pk: &Self::PublicKey, message: impl Into<Z>) -> Self::Cipher {
-        let (vrfy_key, sign_key) = self.signature.gen();
+        let (vrfy_key, sign_key) = self.signature.key_gen();
 
         let c = self.ibe.enc(pk, &vrfy_key.clone().into(), message);
         let sigma = self.signature.sign(c.to_string(), &sign_key, &vrfy_key);
@@ -123,7 +122,7 @@ where
     /// use qfall_math::integer::Z;
     /// let mut scheme = CCSfromIBE::init_dr_pfdh_from_n(4);
     ///
-    /// let (pk, sk) = scheme.gen();
+    /// let (pk, sk) = scheme.key_gen();
     /// let cipher = scheme.enc(&pk, 1);
     /// let m = scheme.dec(&sk, &cipher);
     ///

@@ -10,7 +10,7 @@
 //! according to [\[1\]](<../index.html#:~:text=[1]>).
 
 use crate::{
-    hash::{sha256::HashMatZq, HashInto},
+    hash::{HashInto, sha256::HashMatZq},
     signature::SignatureScheme,
 };
 use qfall_math::{
@@ -45,7 +45,7 @@ use std::collections::HashMap;
 /// let m = "Hello World!";
 ///
 /// let mut fdh = FDHGPV::setup(4, 113, 17);
-/// let (pk, sk) = fdh.gen();
+/// let (pk, sk) = fdh.key_gen();
 ///
 /// let sigma = fdh.sign(m.to_string(), &sk, &pk);
 ///
@@ -110,7 +110,7 @@ impl SignatureScheme for FDHGPV {
     type Signature = MatZ;
 
     /// Generates a trapdoor by calling the `trap_gen` of the psf
-    fn gen(&mut self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&mut self) -> (Self::PublicKey, Self::SecretKey) {
         self.psf.trap_gen()
     }
     /// Firstly checks if the message has been signed before, and if, return that
@@ -146,7 +146,7 @@ impl SignatureScheme for FDHGPV {
 
 #[cfg(test)]
 mod test_fdh {
-    use crate::signature::{fdh::gpv::FDHGPV, SignatureScheme};
+    use crate::signature::{SignatureScheme, fdh::gpv::FDHGPV};
     use qfall_math::{integer::Z, rational::Q, traits::Pow};
 
     /// Ensure that the generated signature is valid.
@@ -160,7 +160,7 @@ mod test_fdh {
         let q = Z::from(2).pow(&k).unwrap();
 
         let mut fdh = FDHGPV::setup(n, &q, &s);
-        let (pk, sk) = fdh.gen();
+        let (pk, sk) = fdh.key_gen();
 
         for i in 0..10 {
             let m = format!("Hello World! {i}");
@@ -178,7 +178,7 @@ mod test_fdh {
         let mut fdh = FDHGPV::setup(5, 1024, 10);
 
         let m = "Hello World!";
-        let (pk, sk) = fdh.gen();
+        let (pk, sk) = fdh.key_gen();
         let _ = fdh.sign(m.to_owned(), &sk, &pk);
 
         assert!(fdh.storage.contains_key(m))
@@ -191,7 +191,7 @@ mod test_fdh {
 
         // fill one entry in the HashMap
         let m = "Hello World!";
-        let (pk, sk) = fdh.gen();
+        let (pk, sk) = fdh.key_gen();
         let _ = fdh.sign(m.to_owned(), &sk, &pk);
 
         let fdh_string = serde_json::to_string(&fdh).expect("Unable to create a json object");

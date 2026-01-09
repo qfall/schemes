@@ -10,7 +10,7 @@
 //! according to [\[1\]](<../index.html#:~:text=[1]>).
 
 use crate::{
-    hash::{sha256::HashMatPolynomialRingZq, HashInto},
+    hash::{HashInto, sha256::HashMatPolynomialRingZq},
     signature::SignatureScheme,
 };
 use qfall_math::{
@@ -19,7 +19,7 @@ use qfall_math::{
     rational::Q,
 };
 use qfall_tools::{
-    primitive::psf::{PSFGPVRing, PSF},
+    primitive::psf::{PSF, PSFGPVRing},
     sample::g_trapdoor::gadget_parameters::GadgetParametersRing,
 };
 use serde::{Deserialize, Serialize};
@@ -54,7 +54,7 @@ use std::collections::HashMap;
 /// }
 ///
 /// let mut fdh = FDHGPVRing::setup(N, MODULUS, compute_s());
-/// let (pk, sk) = fdh.gen();
+/// let (pk, sk) = fdh.key_gen();
 /// let m = &format!("Hello World!");
 /// let sigma = fdh.sign(m.to_owned(), &sk, &pk);
 /// assert!(
@@ -130,7 +130,7 @@ impl SignatureScheme for FDHGPVRing {
     type Signature = MatPolyOverZ;
 
     /// Generates a trapdoor by calling the `trap_gen` of the psf
-    fn gen(&mut self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&mut self) -> (Self::PublicKey, Self::SecretKey) {
         self.psf.trap_gen()
     }
 
@@ -167,7 +167,7 @@ impl SignatureScheme for FDHGPVRing {
 
 #[cfg(test)]
 mod test_fdh {
-    use crate::signature::{fdh::gpv_ring::FDHGPVRing, SignatureScheme};
+    use crate::signature::{SignatureScheme, fdh::gpv_ring::FDHGPVRing};
     use qfall_math::rational::Q;
 
     const MODULUS: i64 = 512;
@@ -180,7 +180,7 @@ mod test_fdh {
     #[test]
     fn ensure_valid_signature_is_generated() {
         let mut fdh = FDHGPVRing::setup(N, MODULUS, compute_s());
-        let (pk, sk) = fdh.gen();
+        let (pk, sk) = fdh.key_gen();
 
         for i in 0..10 {
             let m = &format!("Hello World! {i}");
@@ -202,7 +202,7 @@ mod test_fdh {
         let mut fdh = FDHGPVRing::setup(N, MODULUS, compute_s());
 
         let m = "Hello World!";
-        let (pk, sk) = fdh.gen();
+        let (pk, sk) = fdh.key_gen();
         let sign_1 = fdh.sign(m.to_owned(), &sk, &pk);
         let sign_2 = fdh.sign(m.to_owned(), &sk, &pk);
 
@@ -217,7 +217,7 @@ mod test_fdh {
 
         // fill one entry in the HashMap
         let m = "Hello World!";
-        let (pk, sk) = fdh.gen();
+        let (pk, sk) = fdh.key_gen();
         let _ = fdh.sign(m.to_owned(), &sk, &pk);
 
         let fdh_string = serde_json::to_string(&fdh).expect("Unable to create a json object");

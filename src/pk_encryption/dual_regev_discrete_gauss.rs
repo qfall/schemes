@@ -6,9 +6,8 @@
 // the terms of the Mozilla Public License Version 2.0 as published by the
 // Mozilla Foundation. See <https://mozilla.org/en-US/MPL/2.0/>.
 
-//! This module contains an implementation of the IND-CPA secure
-//! public key Dual Regev encryption scheme with an instantiation of the regularity lemma
-//! via a discrete Gaussian distribution.
+//! Contains an implementation of the IND-CPA PKE scheme refered to as Dual Regev encryption
+//! with an instantiation of the regularity lemma using discrete Gaussians.
 
 use super::{GenericMultiBitEncryption, PKEncryptionScheme};
 use qfall_math::{
@@ -38,7 +37,7 @@ use serde::{Deserialize, Serialize};
 /// use qfall_math::integer::Z;
 /// // setup public parameters and key pair
 /// let dual_regev = DualRegevWithDiscreteGaussianRegularity::default();
-/// let (pk, sk) = dual_regev.gen();
+/// let (pk, sk) = dual_regev.key_gen();
 ///
 /// // encrypt a bit
 /// let msg = Z::ZERO; // must be a bit, i.e. msg = 0 or 1
@@ -306,7 +305,7 @@ impl DualRegevWithDiscreteGaussianRegularity {
         // r >= ω( sqrt( log m ) )
         if self.r < self.m.log(2).unwrap().sqrt() {
             return Err(MathError::InvalidIntegerInput(String::from(
-                "Security is not guaranteed as r < sqrt( log m ) and r >= ω(sqrt(log m)) is required."
+                "Security is not guaranteed as r < sqrt( log m ) and r >= ω(sqrt(log m)) is required.",
             )));
         }
 
@@ -355,9 +354,9 @@ impl PKEncryptionScheme for DualRegevWithDiscreteGaussianRegularity {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, DualRegevWithDiscreteGaussianRegularity};
     /// let dual_regev = DualRegevWithDiscreteGaussianRegularity::default();
     ///
-    /// let (pk, sk) = dual_regev.gen();
+    /// let (pk, sk) = dual_regev.key_gen();
     /// ```
-    fn gen(&self) -> (Self::PublicKey, Self::SecretKey) {
+    fn key_gen(&self) -> (Self::PublicKey, Self::SecretKey) {
         // e <- SampleD over lattice Z^m, center 0 with Gaussian parameter r
         let vec_e = MatZq::sample_discrete_gauss(&self.m, 1, &self.q, 0, &self.r).unwrap();
         // A <- Z_q^{n x m}
@@ -388,7 +387,7 @@ impl PKEncryptionScheme for DualRegevWithDiscreteGaussianRegularity {
     /// ```
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, DualRegevWithDiscreteGaussianRegularity};
     /// let dual_regev = DualRegevWithDiscreteGaussianRegularity::default();
-    /// let (pk, sk) = dual_regev.gen();
+    /// let (pk, sk) = dual_regev.key_gen();
     ///
     /// let cipher = dual_regev.enc(&pk, 1);
     /// ```
@@ -430,7 +429,7 @@ impl PKEncryptionScheme for DualRegevWithDiscreteGaussianRegularity {
     /// use qfall_schemes::pk_encryption::{PKEncryptionScheme, DualRegevWithDiscreteGaussianRegularity};
     /// use qfall_math::integer::Z;
     /// let dual_regev = DualRegevWithDiscreteGaussianRegularity::default();
-    /// let (pk, sk) = dual_regev.gen();
+    /// let (pk, sk) = dual_regev.key_gen();
     /// let cipher = dual_regev.enc(&pk, 1);
     ///
     /// let m = dual_regev.dec(&sk, &cipher);
@@ -538,56 +537,56 @@ mod test_dual_regev {
     use crate::pk_encryption::PKEncryptionScheme;
     use qfall_math::integer::Z;
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 0 and small n.
     #[test]
     fn cycle_zero_small_n() {
         let msg = Z::ZERO;
         let dr = DualRegevWithDiscreteGaussianRegularity::default();
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 1 and small n.
     #[test]
     fn cycle_one_small_n() {
         let msg = Z::ONE;
         let dr = DualRegevWithDiscreteGaussianRegularity::default();
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 0 and larger n.
     #[test]
     fn cycle_zero_large_n() {
         let msg = Z::ZERO;
         let dr = DualRegevWithDiscreteGaussianRegularity::new_from_n(30);
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
 
         assert_eq!(msg, m);
     }
 
-    /// Checks whether the full-cycle of gen, enc, dec works properly
+    /// Checks whether the full-cycle of key_gen, enc, dec works properly
     /// for message 1 and larger n.
     #[test]
     fn cycle_one_large_n() {
         let msg = Z::ONE;
         let dr = DualRegevWithDiscreteGaussianRegularity::new_from_n(30);
 
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
         let cipher = dr.enc(&pk, &msg);
         let m = dr.dec(&sk, &cipher);
 
@@ -599,7 +598,7 @@ mod test_dual_regev {
     fn modulus_application() {
         let messages = [2, 3, i64::MAX, i64::MIN];
         let dr = DualRegevWithDiscreteGaussianRegularity::default();
-        let (pk, sk) = dr.gen();
+        let (pk, sk) = dr.key_gen();
 
         for msg in messages {
             let msg_mod = Z::from(msg.rem_euclid(2));
@@ -629,7 +628,7 @@ mod test_multi_bits {
             let msg = Z::from(value);
             let scheme = DualRegevWithDiscreteGaussianRegularity::default();
 
-            let (pk, sk) = scheme.gen();
+            let (pk, sk) = scheme.key_gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
             let m = scheme.dec_multiple_bits(&sk, &cipher);
 
@@ -644,7 +643,7 @@ mod test_multi_bits {
         let msg = Z::ZERO;
         let scheme = DualRegevWithDiscreteGaussianRegularity::default();
 
-        let (pk, sk) = scheme.gen();
+        let (pk, sk) = scheme.key_gen();
         let cipher = scheme.enc_multiple_bits(&pk, &msg);
         let m = scheme.dec_multiple_bits(&sk, &cipher);
 
@@ -662,7 +661,7 @@ mod test_multi_bits {
             let msg = Z::from(value);
             let scheme = DualRegevWithDiscreteGaussianRegularity::default();
 
-            let (pk, sk) = scheme.gen();
+            let (pk, sk) = scheme.key_gen();
             let cipher = scheme.enc_multiple_bits(&pk, &msg);
             let m = scheme.dec_multiple_bits(&sk, &cipher);
 
