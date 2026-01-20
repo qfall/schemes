@@ -15,8 +15,8 @@ autobenches = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-qfall-tools = { git = "https://github.com/qfall/tools", branch = "dev" }
-qfall-math = { git = "https://github.com/qfall/math", branch = "dev" }
+qfall-tools = "0"
+qfall-math = "0"
 sha2 = "0"
 serde = {version="1", features=["derive"]}
 serde_json = "1"
