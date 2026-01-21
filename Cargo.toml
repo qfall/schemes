@@ -1,0 +1,31 @@
+[package]
+name = "qfall-schemes"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85" # due to rand and rand_distr dependency
+description = "Collection of prototype implementations of lattice-based cryptography"
+readme = "README.md"
+homepage = "https://qfall.github.io"
+repository = "https://github.com/qfall/schemes"
+license = "MPL-2.0"
+keywords = ["prototype", "lattice", "cryptography"]
+categories = ["cryptography", "mathematics", "development-tools::build-utils", "development-tools::testing", "development-tools::profiling"]
+autobenches = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+qfall-tools = "0"
+qfall-math = "0"
+sha2 = "0"
+serde = {version="1", features=["derive"]}
+serde_json = "1"
+typetag = "0"
+criterion = { version = "0.8", features = ["html_reports"] }
+
+[profile.bench]
+debug = true
+
+[[bench]]
+name = "benchmarks"
+harness = false
