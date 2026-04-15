@@ -1,4 +1,4 @@
-// Copyright © 2023 Phil Milewski
+// Copyright 2023 Phil Milewski
 //
 // This file is part of qFALL-schemes.
 //
@@ -39,7 +39,10 @@ pub fn sha256(string: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(string);
     let result = hasher.finalize();
-    format!("{result:x}")
+    result
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<String>()
 }
 
 /// Hashes a given String literal into a [`Zq`] using sha256.
