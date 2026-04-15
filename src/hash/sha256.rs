@@ -39,7 +39,10 @@ pub fn sha256(string: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(string);
     let result = hasher.finalize();
-    result.iter().map(|b| format!("{b:02x}")).collect::<String>()
+    result
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<String>()
 }
 
 /// Hashes a given String literal into a [`Zq`] using sha256.
