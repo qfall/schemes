@@ -628,7 +628,7 @@ impl SignatureScheme for MLDSA {
 
 #[cfg(test)]
 mod test_mldsa {
-    use crate::signature::{SignatureScheme, MLDSA};
+    use crate::signature::{MLDSA, SignatureScheme};
 
     /// Ensures that [`MLDSA`] is correct for all ML-DSA specifications by
     /// checking if generated signatures are valid.
