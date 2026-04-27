@@ -629,6 +629,10 @@ impl SignatureScheme for MLDSA {
 #[cfg(test)]
 mod test_mldsa {
     use crate::signature::{MLDSA, SignatureScheme};
+    use qfall_math::{
+        integer::PolyOverZ,
+        traits::{MatrixGetEntry, MatrixSetEntry},
+    };
 
     /// Ensures that [`MLDSA`] is correct for all ML-DSA specifications by
     /// checking if generated signatures are valid.
@@ -650,6 +654,48 @@ mod test_mldsa {
 
                 assert!(ml_dsa.vfy(message, &signature, &pk));
             }
+        }
+    }
+
+    /// Ensures that [`MLDSA`] is correct for all ML-DSA specifications by
+    /// checking if tampered signatures are invalid.
+    #[test]
+    fn tampered_invalid() {
+        let poly = PolyOverZ::from(1);
+        let ml_dsas = [MLDSA::ml_dsa_44(), MLDSA::ml_dsa_65(), MLDSA::ml_dsa_87()];
+        for mut ml_dsa in ml_dsas {
+            let message = String::from("abc");
+
+            let (pk, sk) = ml_dsa.key_gen();
+            let mut signature = ml_dsa.sign(message.clone(), &sk, &pk);
+
+            // invalidate signature
+            unsafe {
+                signature
+                    .1
+                    .set_entry_unchecked(0, 0, signature.1.get_entry_unchecked(0, 0) + &poly)
+            };
+
+            assert!(!ml_dsa.vfy(message, &signature, &pk));
+        }
+    }
+
+    /// Ensures that [`MLDSA`] is correct for all ML-DSA specifications by
+    /// checking if signatures exceeding the norm bound of `z` are invalid.
+    #[test]
+    fn length_invalid() {
+        let ml_dsas = [MLDSA::ml_dsa_44(), MLDSA::ml_dsa_65(), MLDSA::ml_dsa_87()];
+        for mut ml_dsa in ml_dsas {
+            let message = String::from("abc");
+            let poly = PolyOverZ::from(ml_dsa.gamma_1 - ml_dsa.tau * ml_dsa.eta);
+
+            let (pk, sk) = ml_dsa.key_gen();
+            let mut signature = ml_dsa.sign(message.clone(), &sk, &pk);
+
+            // set `z` too long to be valid
+            unsafe { signature.1.set_entry_unchecked(0, 0, &poly) };
+
+            assert!(!ml_dsa.vfy(message, &signature, &pk));
         }
     }
 }
