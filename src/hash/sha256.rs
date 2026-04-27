@@ -221,7 +221,7 @@ impl HashInto<MatZq> for HashMatZq {
 /// };
 /// let hash_val = hasher.hash("Hello");
 /// ```
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct HashMatPolynomialRingZq {
     pub modulus: ModulusPolynomialRingZq,
     pub rows: i64,
