@@ -10,7 +10,7 @@ use criterion::*;
 use qfall_schemes::signature::MLDSA;
 use qfall_schemes::signature::SignatureScheme;
 
-/// Performs a full-cycle of key_gen, sign, vfy with [`MLDSA`].
+/// Performs a full-cycle of key_gen, sign, vfy for [`MLDSA`] with any fixed set of parameters given defined by the [`MLDSA`] instance.
 fn mldsa_cycle(ml_dsa: &mut MLDSA) {
     let (pk, sk) = ml_dsa.key_gen();
     let msg = String::from("benchmark message");

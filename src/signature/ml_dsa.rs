@@ -16,7 +16,7 @@
 use crate::signature::SignatureScheme;
 use qfall_math::{
     integer::{MatPolyOverZ, PolyOverZ, Z},
-    integer_mod_q::{MatPolynomialRingZq, ModulusPolynomialRingZq},
+    integer_mod_q::{MatPolynomialRingZq, ModulusPolynomialRingZq, Zq},
     traits::{GetCoefficient, MatrixDimensions, MatrixGetEntry, MatrixSetEntry, SetCoefficient},
 };
 use qfall_tools::utils::common_moduli::new_anticyclic;
@@ -73,7 +73,7 @@ pub struct MLDSA {
     pub power2_of_d: Z,                   // power of 2 of number of dropped bits from t
     pub gamma_1: i64,                     // coefficient range of y
     pub gamma_2: i64,                     // low-order rounding range
-    pub omega: u64,                       // max # of 1’s in the hint h
+    pub omega: i64,                       // max # of 1’s in the hint h
     pub phi: i64, // max degree or rather, defines the modulus (X^phi + 1) mod q
 }
 
@@ -129,10 +129,47 @@ impl MLDSA {
         }
     }
 
+    /// Splits a single coefficient `r` into its high-order and low-order part
+    /// according to Power2Round in FIPS 204 (Algorithm 35) s.t. `r = (r - r_0) + r_0`.
+    ///
+    /// Note: This implementation returns the literal difference `r - r_0`, i.e. `r_1 * 2^d`,
+    /// rather than explicitly dividing by `2^d`.
+    ///
+    /// Parameters:
+    /// - `r`: specifies the coefficient to split
+    ///
+    /// Returns a tuple `(r - r_0, r_0)` of type [`Z`], where `r_0 = r mod± 2^d` is the
+    /// least absolute residue of `r` modulo `2^d` and `r - r_0` is a multiple of `2^d`.
+    ///
+    /// # Examples
+    /// ```
+    /// use qfall_schemes::signature::MLDSA;
+    /// use qfall_math::integer::Z;
+    ///
+    /// let ml_dsa = MLDSA::ml_dsa_44(); // 2^d = 8192
+    ///
+    /// let (r_1, r_0) = ml_dsa.power2round_coeff(Z::from(12345));
+    ///
+    /// assert_eq!(Z::from(16384), r_1);
+    /// assert_eq!(Z::from(-4039), r_0);
+    /// ```
+    ///
+    /// # Panics ...
+    /// - if `self.power2_of_d <= 1`.
+    pub fn power2round_coeff(&self, r: Z) -> (Z, Z) {
+        // 2: r_0 <- r^+ mod 2^d
+        let r_0 = Zq::from((&r, &self.power2_of_d)).get_representative_least_absolute_residue();
+        // 3: implicit: r_1 = (r^+ − r_0)/2^d
+        let r_1 = r - &r_0; // We omit dividing by 2^d
+        (r_1, r_0)
+    }
+
     /// Extracts the higher-order and lower-order bits of the elements of a vector.
     ///
     /// This is used during key generation to split the public key vector `t` into
-    /// a high-order part `t_1` (which is published) and a low-order part `t_0` (kept secret).
+    /// a high-order part `t_1` (which is published) and a low-order part `t_0` (kept secret)
+    /// s.t. `t_1 * 2^d + t_0 = t mod q`.
+    ///
     /// Note: This implementation stores the literal difference `t - t_0` rather than
     /// explicitly dividing by `2^d`.
     ///
@@ -140,6 +177,20 @@ impl MLDSA {
     /// - `vector`: The vector of polynomials to be split.
     ///
     /// Returns a tuple `(vec1, vec0)`, each of type [`MatPolyOverZ`], representing the high bits and low bits respectively.
+    ///
+    /// # Examples
+    /// ```
+    /// use qfall_schemes::signature::MLDSA;
+    /// use qfall_math::integer_mod_q::MatPolynomialRingZq;
+    ///
+    /// let ml_dsa = MLDSA::ml_dsa_44();
+    /// let vec_t = MatPolynomialRingZq::sample_uniform(ml_dsa.k, 1, &ml_dsa.modulus);
+    ///
+    /// let (vec_t_1, vec_t_0) = ml_dsa.power2round(vec_t);
+    /// ```
+    ///
+    /// # Panics ...
+    /// - if `self.power2_of_d <= 1`.
     pub fn power2round(&self, vector: MatPolynomialRingZq) -> (MatPolyOverZ, MatPolyOverZ) {
         let mut vec0 = MatPolyOverZ::new(vector.get_num_rows(), vector.get_num_columns());
         let mut vec1 = MatPolyOverZ::new(vector.get_num_rows(), vector.get_num_columns());
@@ -153,10 +204,7 @@ impl MLDSA {
                 for i in 0..self.phi {
                     let coeff = unsafe { entry.get_coeff_unchecked(i) };
 
-                    // 2: r_0 <- r^+ mod 2^d
-                    let coeff0 = mod_pm(&coeff, &self.power2_of_d);
-                    // 3: implicit: r_1 = (r^+ − r_0)/2^d
-                    let coeff1 = coeff - &coeff0; // We omit dividing by 2^d
+                    let (coeff1, coeff0) = self.power2round_coeff(coeff);
 
                     unsafe { entry0.set_coeff_unchecked(i, coeff0) };
                     unsafe { entry1.set_coeff_unchecked(i, coeff1) };
@@ -170,17 +218,73 @@ impl MLDSA {
         (vec1, vec0)
     }
 
+    /// Decomposes a single coefficient `r` into its high bits `r_1` and low bits `r_0`
+    /// according to Decompose in FIPS 204 (Algorithm 36) s.t. `r_1 * (2 * 𝛾_2) + r_0 = r mod q`.
+    /// It handles the edge case `r - r_0 = q - 1` by setting `r_1 = 0` and decrementing `r_0`.
+    ///
+    /// Parameters:
+    /// - `r`: specifies the coefficient to decompose, expected to be in `[0, q)`
+    ///
+    /// Returns a tuple `(r_1, r_0)` of type [`Z`], where `r_1` is in `[0, (q - 1) / (2 * 𝛾_2))`
+    /// and `r_0` is centered around `0` with `|r_0| <= 𝛾_2`.
+    ///
+    /// # Examples
+    /// ```
+    /// use qfall_schemes::signature::MLDSA;
+    /// use qfall_math::integer::Z;
+    ///
+    /// let ml_dsa = MLDSA::ml_dsa_44(); // 2 * 𝛾_2 = 190464
+    ///
+    /// let (r_1, r_0) = ml_dsa.decompose_coeff(Z::from(200000));
+    ///
+    /// assert_eq!(Z::ONE, r_1);
+    /// assert_eq!(Z::from(9536), r_0);
+    /// ```
+    ///
+    /// # Panics ...
+    /// - if `2 * self.gamma_2 <= 1`.
+    pub fn decompose_coeff(&self, r: Z) -> (Z, Z) {
+        // 2: r_0 <- r^+ mod (2 * 𝛾_2)
+        let mut r_0 = Zq::from((&r, 2 * self.gamma_2)).get_representative_least_absolute_residue();
+        // 3: if r^+ - r_0 = q - 1 then
+        if &r - &r_0 == self.modulus.get_q() - 1 {
+            // 4: r_1 <- 0, 5: r_0 <- r_0 - 1
+            r_0 -= 1;
+            (Z::ZERO, r_0)
+        }
+        // 6: else r_1 <- (r^+ - r_0) / (2 * 𝛾_2)
+        else {
+            ((r - &r_0).div_floor(2 * self.gamma_2), r_0)
+        }
+    }
+
     /// Decomposes a vector into higher-order and lower-order bits modulo `q`.
     ///
     /// This function separates a polynomial into its high bits `r_1` and low bits `r_0`
-    /// based on the `gamma_2` parameter. It specifically handles the `q - 1` edge case
+    /// based on the `gamma_2` parameter s.t. `r_1 * (2 * 𝛾_2) + r_0 = r mod q`.
+    /// It specifically handles the `q - 1` edge case
     /// to ensure values wrap correctly around the finite field boundary.
+    ///
     /// Note: Coefficients in `vec0` are defined w.r.t. the modulus centered around `0` rather than the usual field `[0, q-1]`.
     ///
     /// Parameters:
     /// - `vector`: The vector of polynomials to decompose.
     ///
     /// Returns a tuple `(vec1, vec0)`, each of type [`MatPolyOverZ`], representing the high bits and low bits respectively.
+    ///
+    /// # Examples
+    /// ```
+    /// use qfall_schemes::signature::MLDSA;
+    /// use qfall_math::integer_mod_q::MatPolynomialRingZq;
+    ///
+    /// let ml_dsa = MLDSA::ml_dsa_44();
+    /// let vec_r = MatPolynomialRingZq::sample_uniform(ml_dsa.k, 1, &ml_dsa.modulus);
+    ///
+    /// let (vec_r_1, vec_r_0) = ml_dsa.decompose(&vec_r);
+    /// ```
+    ///
+    /// # Panics ...
+    /// - if `2 * self.gamma_2 <= 1`.
     pub fn decompose(&self, vector: &MatPolynomialRingZq) -> (MatPolyOverZ, MatPolyOverZ) {
         let mut vec0 = MatPolyOverZ::new(vector.get_num_rows(), vector.get_num_columns());
         let mut vec1 = MatPolyOverZ::new(vector.get_num_rows(), vector.get_num_columns());
@@ -193,20 +297,7 @@ impl MLDSA {
 
                 for i in 0..self.phi {
                     let coeff = unsafe { entry.get_coeff_unchecked(i) };
-                    // 2: r_0 <- r^+ mod (2 * 𝛾_2)
-                    let mut coeff0 = mod_pm(&coeff, 2 * self.gamma_2);
-                    let coeff1;
-                    // 3: if r^+ - r_0 = q - 1 then
-                    if &coeff - &coeff0 == self.modulus.get_q() - 1 {
-                        // 4: r_1 <- 0
-                        coeff1 = Z::ZERO;
-                        // 5: r_0 <- r_0 - 1
-                        coeff0 -= 1;
-                    }
-                    // 6: else r_1 <- (r^+ - r_0) / (2 * 𝛾_2)
-                    else {
-                        coeff1 = (coeff - &coeff0).div_floor(2 * self.gamma_2);
-                    }
+                    let (coeff1, coeff0) = self.decompose_coeff(coeff);
 
                     // insert values into polynomials
                     unsafe { entry0.set_coeff_unchecked(i, coeff0) };
@@ -227,10 +318,30 @@ impl MLDSA {
     /// It ensures that exactly `tau` coefficients are set to either `1` or `-1`,
     /// and all other coefficients are `0`.
     ///
+    /// In contrast to `SampleInBall` in FIPS 204 (Algorithm 29), which derives positions and signs
+    /// from `SHAKE256` via an inside-out Fisher-Yates shuffle, this function seeds a [`SmallRng`] and
+    /// resamples uniform positions until `tau` distinct ones are set. Hence, it yields the same
+    /// distribution, but different concrete outputs for a given seed.
+    ///
     /// Parameters:
     /// - `seed`: A 32-byte seed used to deterministically generate the polynomial.
     ///
     /// Returns a [`PolyOverZ`] representing the challenge polynomial.
+    ///
+    /// # Examples
+    /// ```
+    /// use qfall_schemes::signature::MLDSA;
+    ///
+    /// let ml_dsa = MLDSA::ml_dsa_44();
+    ///
+    /// let c = ml_dsa.modified_sample_in_ball([0u8; 32]);
+    ///
+    /// assert_eq!(c, ml_dsa.modified_sample_in_ball([0u8; 32]));
+    /// ```
+    ///
+    /// # Panics ...
+    /// - if `self.phi <= 0`. If `self.tau > self.phi`, this function does not terminate,
+    ///   as it cannot find `tau` distinct positions.
     pub fn modified_sample_in_ball(&self, seed: [u8; 32]) -> PolyOverZ {
         let mut rng = SmallRng::from_seed(seed);
         let mut poly = PolyOverZ::default();
@@ -253,6 +364,39 @@ impl MLDSA {
         poly
     }
 
+    /// Computes the hint bit for a single coefficient according to MakeHint
+    /// in FIPS 204 (Algorithm 39), i.e. checks whether adding `z` to `r` changes the high bits of `r`.
+    ///
+    /// Parameters:
+    /// - `r`: specifies the original coefficient, expected to be in `[0, q)`
+    /// - `r_plus_z`: specifies the coefficient `(r + z) mod q`, expected to be in `[0, q)`
+    ///
+    /// Returns `true` if the high bits of `r` and `r + z` differ, and `false` otherwise.
+    ///
+    /// # Examples
+    /// ```
+    /// use qfall_schemes::signature::MLDSA;
+    /// use qfall_math::integer::Z;
+    ///
+    /// let ml_dsa = MLDSA::ml_dsa_44();
+    ///
+    /// // 95000 has high bits 0, 95500 has high bits 1
+    /// assert!(ml_dsa.make_hint_coeff(Z::from(95000), Z::from(95500)));
+    /// // 100 and 200 share high bits 0
+    /// assert!(!ml_dsa.make_hint_coeff(Z::from(100), Z::from(200)));
+    /// ```
+    ///
+    /// # Panics ...
+    /// - if `2 * self.gamma_2 <= 1`.
+    pub fn make_hint_coeff(&self, r: Z, r_plus_z: Z) -> bool {
+        // 1: r_1 <- HighBits(r)
+        let (r_1, _) = self.decompose_coeff(r);
+        // 2: v_1 <- HighBits(r + z)
+        let (v_1, _) = self.decompose_coeff(r_plus_z);
+        // 3: return [[ r_1 != v_1 ]]
+        r_1 != v_1
+    }
+
     /// Computes a boolean hint matrix used to compress the signature.
     ///
     /// The hint indicates whether adding the signature noise `z` to the signer's
@@ -264,6 +408,23 @@ impl MLDSA {
     /// - `r_vector`: The original state vector.
     ///
     /// Returns a [`MatPolyOverZ`] containing `1` where the high bits differ, and `0` otherwise.
+    ///
+    /// # Examples
+    /// ```
+    /// use qfall_schemes::signature::MLDSA;
+    /// use qfall_math::{integer::MatPolyOverZ, integer_mod_q::MatPolynomialRingZq};
+    ///
+    /// let ml_dsa = MLDSA::ml_dsa_44();
+    /// let vec_r = MatPolynomialRingZq::sample_uniform(ml_dsa.k, 1, &ml_dsa.modulus);
+    /// let vec_z = MatPolynomialRingZq::from((MatPolyOverZ::new(ml_dsa.k, 1), &ml_dsa.modulus));
+    ///
+    /// let hint = ml_dsa.make_hint(&vec_z, &vec_r);
+    ///
+    /// assert_eq!(hint, MatPolyOverZ::new(ml_dsa.k, 1));
+    /// ```
+    ///
+    /// # Panics ...
+    /// - if `2 * self.gamma_2 <= 1`.
     pub fn make_hint(
         &self,
         z_vector: &MatPolynomialRingZq,
@@ -273,25 +434,21 @@ impl MLDSA {
         assert_eq!(z_vector.get_num_columns(), r_vector.get_num_columns());
         assert_eq!(z_vector.get_mod(), r_vector.get_mod());
 
-        // 1: r_1 <- HighBits(r)
-        let (vec_r_1, _) = self.decompose(r_vector);
-        // 2: v_1 <- HighBits(r + z)
-        let (vec_v_1, _) = self.decompose(&(r_vector + z_vector));
+        let vec_r_plus_z = r_vector + z_vector;
+        let mut hint = MatPolyOverZ::new(r_vector.get_num_rows(), r_vector.get_num_columns());
 
-        let mut hint = MatPolyOverZ::new(vec_r_1.get_num_rows(), vec_r_1.get_num_columns());
-
-        for row in 0..vec_r_1.get_num_rows() {
-            for col in 0..vec_r_1.get_num_columns() {
-                let v_1_entry: PolyOverZ = unsafe { vec_v_1.get_entry_unchecked(row, col) };
-                let r_1_entry: PolyOverZ = unsafe { vec_r_1.get_entry_unchecked(row, col) };
+        for row in 0..r_vector.get_num_rows() {
+            for col in 0..r_vector.get_num_columns() {
+                let r_entry: PolyOverZ = unsafe { r_vector.get_entry_unchecked(row, col) };
+                let r_plus_z_entry: PolyOverZ =
+                    unsafe { vec_r_plus_z.get_entry_unchecked(row, col) };
                 let mut hint_poly = PolyOverZ::default();
 
                 for i in 0..self.phi {
-                    let v_1_coeff = unsafe { v_1_entry.get_coeff_unchecked(i) };
-                    let r_1_coeff = unsafe { r_1_entry.get_coeff_unchecked(i) };
+                    let r_coeff = unsafe { r_entry.get_coeff_unchecked(i) };
+                    let r_plus_z_coeff = unsafe { r_plus_z_entry.get_coeff_unchecked(i) };
 
-                    // 3: return [[ r_1 != v_1 ]]
-                    if r_1_coeff != v_1_coeff {
+                    if self.make_hint_coeff(r_coeff, r_plus_z_coeff) {
                         unsafe {
                             hint_poly.set_coeff_unchecked(i, 1);
                         };
@@ -305,8 +462,50 @@ impl MLDSA {
         hint
     }
 
-    /// Reconstructs the high bits of a polynomial using a previously generated hint.
+    /// Recovers the high bits of a single coefficient using its hint bit
+    /// according to UseHint in FIPS 204 (Algorithm 40).
     ///
+    /// Parameters:
+    /// - `h`: specifies the hint bit, where `1` indicates that the high bits need correction
+    ///   and any other value leaves them unchanged
+    /// - `r`: specifies the coefficient whose high bits are recovered, expected to be in `[0, q)`
+    /// - `m`: specifies the number of possible high-bit values, i.e. `(q - 1) / (2 * 𝛾_2)`
+    ///
+    /// Returns the corrected high bits of `r` as a [`Z`] in `[0, m)`.
+    ///
+    /// # Examples
+    /// ```
+    /// use qfall_schemes::signature::MLDSA;
+    /// use qfall_math::integer::Z;
+    ///
+    /// let ml_dsa = MLDSA::ml_dsa_44();
+    /// let m = Z::from(44); // (q - 1) / (2 * 𝛾_2)
+    ///
+    /// // MakeHint(500, 95000) = 1, and UseHint recovers HighBits(95500) = 1 from 95000 alone
+    /// let high_bits = ml_dsa.use_hint_coeff(Z::ONE, Z::from(95000), &m);
+    ///
+    /// assert_eq!(Z::ONE, high_bits);
+    /// ```
+    ///
+    /// # Panics ...
+    /// - if `2 * self.gamma_2 <= 1`.
+    /// - if `m` is `0` and `h = 1`.
+    pub fn use_hint_coeff(&self, h: Z, r: Z, m: &Z) -> Z {
+        // 2: (r_1, r_0) <- Decompose(r)
+        let (r_1, r_0) = self.decompose_coeff(r);
+        // 3: if h = 1 and r_0 > 0 return (r_1 + 1) mod m
+        if h == 1 && r_0 > 0 {
+            (r_1 + 1) % m
+        }
+        // 4: if h = 1 and r_0 <= 0 return (r_1 - 1) mod m
+        else if h == 1 && r_0 <= 0 {
+            (r_1 - 1) % m
+        } else {
+            r_1
+        }
+    }
+
+    /// Reconstructs the high bits of a polynomial using a previously generated hint.
     ///
     /// During verification, the verifier only has an approximation of the signer's state.
     /// This function uses the hint matrix to correctly recover the exact high bits
@@ -317,6 +516,27 @@ impl MLDSA {
     /// - `r_vector`: The verifier's approximated state matrix.
     ///
     /// Returns the reconstructed high bits as a [`MatPolyOverZ`].
+    ///
+    /// # Examples
+    /// ```
+    /// use qfall_schemes::signature::MLDSA;
+    /// use qfall_math::{integer::MatPolyOverZ, integer_mod_q::MatPolynomialRingZq};
+    ///
+    /// let ml_dsa = MLDSA::ml_dsa_44();
+    /// let vec_r = MatPolynomialRingZq::sample_uniform(ml_dsa.k, 1, &ml_dsa.modulus);
+    /// let vec_z = MatPolyOverZ::sample_uniform(ml_dsa.k, 1, ml_dsa.phi - 1, -1000, 1001).unwrap();
+    /// let vec_z = MatPolynomialRingZq::from((vec_z, &ml_dsa.modulus));
+    ///
+    /// let hint = ml_dsa.make_hint(&vec_z, &vec_r);
+    /// let high_bits = ml_dsa.use_hint(&hint, &vec_r);
+    ///
+    /// // the hint recovers HighBits(r + z) from r alone
+    /// assert_eq!(high_bits, ml_dsa.decompose(&(&vec_r + &vec_z)).0);
+    /// ```
+    ///
+    /// # Panics ...
+    /// - if `2 * self.gamma_2 <= 1`.
+    /// - if `m` is `0` and `h = 1`.
     pub fn use_hint(
         &self,
         h_vector: &MatPolyOverZ,
@@ -328,31 +548,24 @@ impl MLDSA {
         // 1: m <- (q - 1)/(2 * 𝛾_2)
         let m: Z = (self.modulus.get_q() - Z::ONE).div_floor(2 * self.gamma_2);
 
-        // 2: (r_1, r_0) <- Decompose(r)
-        let (vec_r_1, vec_r_0) = self.decompose(r_vector);
         let mut out = MatPolyOverZ::new(r_vector.get_num_rows(), r_vector.get_num_columns());
 
         for row in 0..r_vector.get_num_rows() {
             for col in 0..r_vector.get_num_columns() {
-                let entry_r_0 = unsafe { vec_r_0.get_entry_unchecked(row, col) };
-                let mut entry_r_1 = unsafe { vec_r_1.get_entry_unchecked(row, col) };
-                let entry_h = unsafe { h_vector.get_entry_unchecked(row, col) };
+                let entry_r: PolyOverZ = unsafe { r_vector.get_entry_unchecked(row, col) };
+                let entry_h: PolyOverZ = unsafe { h_vector.get_entry_unchecked(row, col) };
+                let mut entry_out = PolyOverZ::default();
 
                 for i in 0..self.phi {
-                    let r_0_coeff = unsafe { entry_r_0.get_coeff_unchecked(i) };
-                    let r_1_coeff = unsafe { entry_r_1.get_coeff_unchecked(i) };
+                    let r_coeff = unsafe { entry_r.get_coeff_unchecked(i) };
                     let h_coeff = unsafe { entry_h.get_coeff_unchecked(i) };
 
-                    // 3: if h = 1 and r_0 > 0 return (r_1 + 1) mod m
-                    if h_coeff == 1 && r_0_coeff > 0 {
-                        unsafe { entry_r_1.set_coeff_unchecked(i, (r_1_coeff + 1) % &m) };
-                    } else if h_coeff == 1 && r_0_coeff <= 0 {
-                        unsafe { entry_r_1.set_coeff_unchecked(i, (r_1_coeff - 1) % &m) };
-                    }
+                    unsafe {
+                        entry_out.set_coeff_unchecked(i, self.use_hint_coeff(h_coeff, r_coeff, &m))
+                    };
                 }
 
-                // insert r_1 into the vector
-                unsafe { out.set_entry_unchecked(row, col, entry_r_1) };
+                unsafe { out.set_entry_unchecked(row, col, entry_out) };
             }
         }
 
@@ -360,52 +573,8 @@ impl MLDSA {
     }
 }
 
-/// Calculates the Hamming weight of a [`MatPolyOverZ`].
-///
-/// The Hamming weight is defined as the total number of non-zero coefficients
-/// across all polynomials in the matrix.
-///
-/// Parameters:
-/// - `matrix`: The hint matrix to evaluate.
-///
-/// Returns the total count of non-zero coefficients as a [`u64`].
-fn hamming_weight(matrix: &MatPolyOverZ) -> u64 {
-    let mut count = 0;
-
-    let entries = matrix.get_entries_rowwise();
-    for entry in entries {
-        for i in 0..=entry.get_degree() {
-            if 0 != unsafe { entry.get_coeff_unchecked(i) } {
-                count += 1;
-            }
-        }
-    }
-
-    count
-}
-
-/// Computes the modulo of a value centered around `0`.
-///
-/// While standard modulo maps values to the positive range `[0, q-1]`,
-/// this function computes the centered modulo, mapping the value to the
-/// centered range `(-ceil(q/2), floor(q/2)]`.
-///
-/// Parameters:
-/// - `value`: The integer value to reduce.
-/// - `q`: The modulus boundary.
-///
-/// Returns the centered modulo result as a [`Z`] instance.
-fn mod_pm(value: &Z, q: impl Into<Z>) -> Z {
-    let q: Z = q.into();
-
-    let r = value % &q;
-    let half_q = q.div_floor(2);
-
-    // shift into the centered range
-    if r > half_q { r - q } else { r }
-}
-
 impl SignatureScheme for MLDSA {
+    // (A, tr, s_1, s_2, t_0)
     type SecretKey = (
         MatPolynomialRingZq,
         [u8; 32],
@@ -413,7 +582,11 @@ impl SignatureScheme for MLDSA {
         MatPolyOverZ,
         MatPolyOverZ,
     );
+
+    // (A, t_1)
     type PublicKey = (MatPolynomialRingZq, MatPolyOverZ);
+
+    // (c_tilde, z, h)
     type Signature = ([u8; 32], MatPolyOverZ, MatPolyOverZ);
 
     /// Generates a `(pk, sk)` pair by following these steps:
@@ -553,7 +726,7 @@ impl SignatureScheme for MLDSA {
 
                 // 28: if ||c * t_0||∞ >= 𝛾_2 or the number of 1’s in h is greater than 𝜔, then (z, h) ← ⊥
                 if (c * &sk.4).norm_infty().unwrap() < self.gamma_2
-                    && hamming_weight(&vec_h) <= self.omega
+                    && vec_h.hamming_weight() <= self.omega
                 {
                     // 33: 𝜎 <- sigEncode(c, z mod q, h)
                     // 34: return 𝜎
@@ -696,6 +869,249 @@ mod test_mldsa {
             unsafe { signature.1.set_entry_unchecked(0, 0, &poly) };
 
             assert!(!ml_dsa.vfy(message, &signature, &pk));
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_helpers {
+    use crate::signature::MLDSA;
+    use qfall_math::{
+        integer::{MatPolyOverZ, PolyOverZ, Z},
+        integer_mod_q::MatPolynomialRingZq,
+        traits::{GetCoefficient, MatrixGetEntry, MatrixSetEntry},
+    };
+
+    /// Returns all [MLDSA] parameter sets.
+    fn all_parameter_sets() -> [MLDSA; 3] {
+        [MLDSA::ml_dsa_44(), MLDSA::ml_dsa_65(), MLDSA::ml_dsa_87()]
+    }
+
+    /// Returns the i-th coefficient of the polynomial.
+    fn coeff(poly: &PolyOverZ, i: i64) -> Z {
+        poly.get_coeff(i).unwrap()
+    }
+
+    /// Checks [`MLDSA::power2round_coeff`] on known values.
+    #[test]
+    fn power2round_coeff_known_values() {
+        let ml_dsa = MLDSA::ml_dsa_44(); // 2^d = 8192
+
+        assert_eq!((Z::ZERO, Z::ZERO), ml_dsa.power2round_coeff(Z::ZERO));
+        assert_eq!(
+            (Z::from(16384), Z::from(-4039)),
+            ml_dsa.power2round_coeff(Z::from(12345))
+        );
+        assert_eq!(
+            (Z::from(8192), Z::MINUS_ONE),
+            ml_dsa.power2round_coeff(Z::from(8191))
+        );
+        assert_eq!(
+            (Z::ZERO, Z::from(100)),
+            ml_dsa.power2round_coeff(Z::from(100))
+        );
+    }
+
+    /// Checks [`MLDSA::decompose_coeff`] on known values, including the `q - 1` edge case.
+    #[test]
+    fn decompose_coeff_known_values() {
+        let ml_dsa = MLDSA::ml_dsa_44(); // 2 * 𝛾_2 = 190464, q = 8380417
+
+        assert_eq!((Z::ZERO, Z::ZERO), ml_dsa.decompose_coeff(Z::ZERO));
+        assert_eq!(
+            (Z::ONE, Z::from(9536)),
+            ml_dsa.decompose_coeff(Z::from(200000))
+        );
+        assert_eq!(
+            (Z::ONE, Z::from(-94964)),
+            ml_dsa.decompose_coeff(Z::from(95500))
+        );
+        assert_eq!(
+            (Z::ZERO, Z::MINUS_ONE),
+            ml_dsa.decompose_coeff(Z::from(8380416))
+        );
+    }
+
+    /// Ensures that [`MLDSA::make_hint_coeff`] flags exactly the coefficients
+    /// whose high bits change.
+    #[test]
+    fn make_hint_coeff_known_values() {
+        let ml_dsa = MLDSA::ml_dsa_44();
+
+        assert!(!ml_dsa.make_hint_coeff(Z::from(100), Z::from(100)));
+        assert!(!ml_dsa.make_hint_coeff(Z::from(100), Z::from(200)));
+        assert!(ml_dsa.make_hint_coeff(Z::from(95000), Z::from(95500)));
+        // q - 1 has high bits 0, as does 0
+        assert!(!ml_dsa.make_hint_coeff(Z::from(8380416), Z::ZERO));
+    }
+
+    /// Checks [`MLDSA::use_hint_coeff`] on known values, including wrap-arounds modulo `m`.
+    #[test]
+    fn use_hint_coeff_known_values() {
+        let ml_dsa = MLDSA::ml_dsa_44();
+        let m = Z::from(44);
+
+        // h = 0 returns HighBits(r)
+        assert_eq!(Z::ONE, ml_dsa.use_hint_coeff(Z::ZERO, Z::from(200000), &m));
+        // h = 1, r_0 > 0 increments
+        assert_eq!(Z::ONE, ml_dsa.use_hint_coeff(Z::ONE, Z::from(95000), &m));
+        // h = 1, r_0 > 0 and r_1 = m - 1 wraps around to 0
+        assert_eq!(Z::ZERO, ml_dsa.use_hint_coeff(Z::ONE, Z::from(8190052), &m));
+        // h = 1, r_0 <= 0 and r_1 = 0 wraps around to m - 1
+        assert_eq!(Z::from(43), ml_dsa.use_hint_coeff(Z::ONE, Z::ZERO, &m));
+    }
+
+    /// Ensures that `use_hint_coeff(make_hint_coeff(r, r + z), r) = HighBits(r + z)`
+    /// for all `|z| <= 𝛾_2` on a grid of coefficients.
+    #[test]
+    fn hint_coeff_roundtrip() {
+        let ml_dsa = MLDSA::ml_dsa_44();
+        let q = ml_dsa.modulus.get_q();
+        let m = (q.clone() - Z::ONE).div_floor(2 * ml_dsa.gamma_2);
+
+        for r in (0..8380417_i64).step_by(99991) {
+            for z in [-ml_dsa.gamma_2, -1, 0, 1, ml_dsa.gamma_2] {
+                let r_plus_z = Z::from((r + z).rem_euclid(8380417));
+                let h = ml_dsa.make_hint_coeff(Z::from(r), r_plus_z.clone());
+                let h = if h { Z::ONE } else { Z::ZERO };
+
+                assert_eq!(
+                    ml_dsa.decompose_coeff(r_plus_z).0,
+                    ml_dsa.use_hint_coeff(h, Z::from(r), &m)
+                );
+            }
+        }
+    }
+
+    /// Ensures that `t_1 + t_0 = t`, `|t_0| <= 2^{d-1}`, and `2^d | t_1`.
+    #[test]
+    fn power2round_reconstructs() {
+        for ml_dsa in all_parameter_sets() {
+            let vec_t = MatPolynomialRingZq::sample_uniform(ml_dsa.k, 1, &ml_dsa.modulus);
+            let (vec_t_1, vec_t_0) = ml_dsa.power2round(vec_t.clone());
+            let half = ml_dsa.power2_of_d.div_floor(2);
+
+            for row in 0..ml_dsa.k {
+                let t: PolyOverZ = vec_t.get_entry(row, 0).unwrap();
+                let t_1: PolyOverZ = vec_t_1.get_entry(row, 0).unwrap();
+                let t_0: PolyOverZ = vec_t_0.get_entry(row, 0).unwrap();
+
+                for i in 0..ml_dsa.phi {
+                    let (c, c_1, c_0) = (coeff(&t, i), coeff(&t_1, i), coeff(&t_0, i));
+
+                    assert_eq!(c, &c_1 + &c_0);
+                    assert!(c_0.abs() <= half);
+                    assert_eq!(c_1 % &ml_dsa.power2_of_d, Z::ZERO);
+                }
+            }
+        }
+    }
+
+    /// Ensures that `r_1 * 2 * gamma_2 + r_0 = r mod q`, `|r_0| <= gamma_2`,
+    /// and `0 <= r_1 < (q - 1) / (2 * gamma_2)`.
+    #[test]
+    fn decompose_reconstructs() {
+        for ml_dsa in all_parameter_sets() {
+            let q = ml_dsa.modulus.get_q();
+            let alpha = Z::from(2 * ml_dsa.gamma_2);
+            let m = Z::from(&q - 1).div_floor(2 * ml_dsa.gamma_2);
+
+            let vec_r = MatPolynomialRingZq::sample_uniform(ml_dsa.k, 1, &ml_dsa.modulus);
+            let (vec_r_1, vec_r_0) = ml_dsa.decompose(&vec_r);
+
+            for row in 0..ml_dsa.k {
+                let r: PolyOverZ = vec_r.get_entry(row, 0).unwrap();
+                let r_1: PolyOverZ = vec_r_1.get_entry(row, 0).unwrap();
+                let r_0: PolyOverZ = vec_r_0.get_entry(row, 0).unwrap();
+
+                for i in 0..ml_dsa.phi {
+                    let (c, c_1, c_0) = (coeff(&r, i), coeff(&r_1, i), coeff(&r_0, i));
+
+                    assert_eq!((&c_1 * &alpha + &c_0 - &c) % &q, Z::ZERO);
+                    assert!(c_0.abs() <= ml_dsa.gamma_2);
+                    assert!(Z::ZERO <= c_1 && c_1 < m);
+                }
+            }
+        }
+    }
+
+    /// Ensures that the edge case `r = q - 1` is decomposed into `r_1 = 0` and `r_0 = -1`.
+    #[test]
+    fn decompose_edge_case() {
+        let ml_dsa = MLDSA::ml_dsa_44();
+        let mut vec_r = MatPolyOverZ::new(1, 1);
+        vec_r.set_entry(0, 0, &PolyOverZ::from(8380416)).unwrap();
+        let vec_r = MatPolynomialRingZq::from((vec_r, &ml_dsa.modulus));
+
+        let (vec_r_1, vec_r_0) = ml_dsa.decompose(&vec_r);
+        let r_1: PolyOverZ = vec_r_1.get_entry(0, 0).unwrap();
+        let r_0: PolyOverZ = vec_r_0.get_entry(0, 0).unwrap();
+
+        assert_eq!(coeff(&r_1, 0), Z::ZERO);
+        assert_eq!(coeff(&r_0, 0), Z::MINUS_ONE);
+    }
+
+    /// Ensures that the challenge is deterministic in the seed, has exactly `tau`
+    /// non-zero coefficients, and all coefficients are in `{-1, 0, 1}`.
+    #[test]
+    fn sample_in_ball_properties() {
+        for ml_dsa in all_parameter_sets() {
+            let c = ml_dsa.modified_sample_in_ball([7u8; 32]);
+
+            assert_eq!(c, ml_dsa.modified_sample_in_ball([7u8; 32]));
+            assert_ne!(c, ml_dsa.modified_sample_in_ball([8u8; 32]));
+            assert!(c.get_degree() < ml_dsa.phi);
+
+            let mut weight = 0;
+            for i in 0..ml_dsa.phi {
+                let value = coeff(&c, i);
+                assert!(value == Z::ZERO || value == Z::ONE || value == Z::MINUS_ONE);
+                if value != Z::ZERO {
+                    weight += 1;
+                }
+            }
+            assert_eq!(weight, ml_dsa.tau);
+        }
+    }
+
+    /// Ensures that a zero shift yields an all-zero hint and that
+    /// using this hint returns `HighBits(r)`.
+    #[test]
+    fn zero_hint() {
+        for ml_dsa in all_parameter_sets() {
+            let vec_r = MatPolynomialRingZq::sample_uniform(ml_dsa.k, 1, &ml_dsa.modulus);
+            let zero = MatPolynomialRingZq::from((MatPolyOverZ::new(ml_dsa.k, 1), &ml_dsa.modulus));
+
+            let hint = ml_dsa.make_hint(&zero, &vec_r);
+
+            assert_eq!(hint, MatPolyOverZ::new(ml_dsa.k, 1));
+            assert_eq!(ml_dsa.use_hint(&hint, &vec_r), ml_dsa.decompose(&vec_r).0);
+        }
+    }
+
+    /// Ensures `UseHint(MakeHint(z, r), r) = HighBits(r + z)` for `||z||_∞ <= gamma_2`.
+    #[test]
+    fn hint_roundtrip() {
+        for ml_dsa in all_parameter_sets() {
+            for _ in 0..5 {
+                let vec_r = MatPolynomialRingZq::sample_uniform(ml_dsa.k, 1, &ml_dsa.modulus);
+                let vec_z = MatPolyOverZ::sample_uniform(
+                    ml_dsa.k,
+                    1,
+                    ml_dsa.phi - 1,
+                    -ml_dsa.gamma_2,
+                    ml_dsa.gamma_2 + 1,
+                )
+                .unwrap();
+                let vec_z = MatPolynomialRingZq::from((vec_z, &ml_dsa.modulus));
+
+                let hint = ml_dsa.make_hint(&vec_z, &vec_r);
+
+                assert_eq!(
+                    ml_dsa.use_hint(&hint, &vec_r),
+                    ml_dsa.decompose(&(&vec_r + &vec_z)).0
+                );
+            }
         }
     }
 }
