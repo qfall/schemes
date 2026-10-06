@@ -40,6 +40,7 @@ List of prototypes
   - [Full-Domain Hash (FDH)](https://docs.rs/qfall-schemes/latest/qfall_schemes/signature/fdh/struct.FDHGPV.html)
   - [Probabilistic FDH (PFDH)](https://docs.rs/qfall-schemes/latest/qfall_schemes/signature/pfdh/struct.PFDHGPV.html)
   - [Ring-based FDH](https://docs.rs/qfall-schemes/latest/qfall_schemes/signature/fdh/struct.FDHGPVRing.html)
+  - [ML-DSA](https://docs.rs/qfall-schemes/latest/qfall_schemes/signature/struct.MLDSA.html)
 - [Identity Based Encryption](https://docs.rs/qfall-schemes/latest/qfall_schemes/identity_based_encryption/index.html)
   - [From Dual LWE Encryption](https://docs.rs/qfall-schemes/latest/qfall_schemes/identity_based_encryption/struct.DualRegevIBE.html)
 - [Hash Functions](https://docs.rs/qfall-schemes/latest/qfall_schemes/hash/index.html)
