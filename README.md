@@ -11,7 +11,7 @@ This `schemes`-crate collects implementations of lattice-based constructions s.t
 
 ## Quick-Start
 First, ensure that you use a Unix-like distribution (Linux or MacOS). Setup [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you're using Windows. This is required due to this crate's dependency on FLINT.
-Then, make sure your `rustc --version` is `1.87` or newer. 
+Then, make sure your `rustc --version` is `1.88` or newer. 
 
 Furthermore, it's required that `m4`, a C-compiler such as `gcc`, and `make` are installed.
 ```bash
@@ -40,6 +40,7 @@ List of prototypes
   - [Full-Domain Hash (FDH)](https://docs.rs/qfall-schemes/latest/qfall_schemes/signature/fdh/struct.FDHGPV.html)
   - [Probabilistic FDH (PFDH)](https://docs.rs/qfall-schemes/latest/qfall_schemes/signature/pfdh/struct.PFDHGPV.html)
   - [Ring-based FDH](https://docs.rs/qfall-schemes/latest/qfall_schemes/signature/fdh/struct.FDHGPVRing.html)
+  - [ML-DSA](https://docs.rs/qfall-schemes/latest/qfall_schemes/signature/struct.MLDSA.html)
 - [Identity Based Encryption](https://docs.rs/qfall-schemes/latest/qfall_schemes/identity_based_encryption/index.html)
   - [From Dual LWE Encryption](https://docs.rs/qfall-schemes/latest/qfall_schemes/identity_based_encryption/struct.DualRegevIBE.html)
 - [Hash Functions](https://docs.rs/qfall-schemes/latest/qfall_schemes/hash/index.html)

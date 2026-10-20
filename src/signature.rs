@@ -13,9 +13,16 @@
 //!   "Trapdoors for hard lattices and new cryptographic constructions."
 //!   Proceedings of the fortieth annual ACM symposium on Theory of computing. 2008.
 //!   <https://doi.org/10.1145/1374376.1374407>
+//! - \[2\] National Institute of Standards and Technology (2024).
+//!   Module-Lattice-Based Digital Signature Standard.
+//!   Federal Information Processing Standards Publication (FIPS 204).
+//!   <https://doi.org/10.6028/NIST.FIPS.204>
 
 pub mod fdh;
+mod ml_dsa;
 pub mod pfdh;
+
+pub use ml_dsa::MLDSA;
 
 /// This trait should be implemented by every signature scheme.
 /// It captures the essential functionalities each signature scheme has to support.

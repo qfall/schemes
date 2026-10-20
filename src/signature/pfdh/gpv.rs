@@ -125,7 +125,7 @@ impl SignatureScheme for PFDHGPV {
     fn sign(&mut self, m: String, sk: &Self::SecretKey, pk: &Self::PublicKey) -> Self::Signature {
         let randomness =
             Z::sample_uniform(0, Z::from(2).pow(&self.randomness_length).unwrap()).unwrap();
-        let u = (self.hash).hash(&format!("{m} {randomness} {}", &self.randomness_length));
+        let u = (self.hash).hash(&format!("{m} {randomness} {}", self.randomness_length));
         let signature_part1 = self.psf.samp_p(pk, sk, &u);
 
         (signature_part1, randomness)
@@ -138,7 +138,7 @@ impl SignatureScheme for PFDHGPV {
             return false;
         }
 
-        let u = (self.hash).hash(&format!("{m} {} {}", sigma.1, &self.randomness_length));
+        let u = (self.hash).hash(&format!("{m} {} {}", sigma.1, self.randomness_length));
 
         self.psf.f_a(pk, &sigma.0) == u
     }
