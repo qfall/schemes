@@ -1,8 +1,8 @@
 [package]
 name = "qfall-schemes"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2024"
-rust-version = "1.87" # due to wit_bindgen dependency
+rust-version = "1.88"
 description = "Collection of prototype implementations of lattice-based cryptography"
 readme = "README.md"
 homepage = "https://qfall.github.io"
@@ -15,8 +15,8 @@ autobenches = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-qfall-tools = "0.1"
-qfall-math = "0.1"
+qfall-tools = "0.2"
+qfall-math = "0.2"
 sha2 = "0.11"
 serde = {version="1", features=["derive"]}
 serde_json = "1"
